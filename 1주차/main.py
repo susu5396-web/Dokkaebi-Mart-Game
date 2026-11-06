@@ -5,7 +5,7 @@ from time import perf_counter
 import pico2d
 from settings import (
     WIDTH, HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_X, BUTTON_Y,
-    HOVER_SCALE, ASSET_DIR, DEVELOPMENT_MODE,
+    HOVER_SCALE, ASSET_DIR, START_ASSET_DIR, DEVELOPMENT_MODE,
 )
 from session import Session
 from ui import NicknameUI, inside, FIELD, CONFIRM, BACK
@@ -24,8 +24,8 @@ def collect_events():
 
 class Game:
     def __init__(self, development_mode=DEVELOPMENT_MODE):
-        self.background = pico2d.load_image(str(ASSET_DIR / "start.png"))
-        self.start_button = pico2d.load_image(str(ASSET_DIR / "start_button.png"))
+        self.background = pico2d.load_image(str(START_ASSET_DIR / "start.png"))
+        self.start_button = pico2d.load_image(str(START_ASSET_DIR / "start_button.png"))
         self.name_background = pico2d.load_image(str(ASSET_DIR / "name_background.png"))
         self.session = Session()
         self.nickname_ui = NicknameUI()
