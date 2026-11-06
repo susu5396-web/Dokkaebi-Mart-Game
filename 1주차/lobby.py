@@ -5,8 +5,11 @@ from pathlib import Path
 
 import pico2d
 
-from settings import WIDTH, HEIGHT, LOBBY_ASSET_DIR
-from ui import NAVY, BLUE, MUTED, inside, rounded_box, text_width, load_ui_image
+from settings import (
+    WIDTH, HEIGHT, LOBBY_ASSET_DIR, LOBBY_BACKGROUND, LOBBY_PANEL,
+    LOBBY_STAGE, LOBBY_LOCKED, LOBBY_ACCOUNT, LOBBY_MUTED,
+)
+from ui import NAVY, BLUE, inside, rounded_box, text_width, load_ui_image
 
 
 STAGE_ONE = (32, 132, 211, 220)
@@ -33,40 +36,46 @@ class LobbyUI:
             for size in (12, 13, 14, 15, 16, 18, 20, 22, 24, 28)
         }
 
-    def art(self, name, rect, stretch=False, silhouette=False):
+    def art(self, name, rect, stretch=False, silhouette=False, tint=None):
         image = self.images[name]
         left, top, right, bottom = self.bounds[name]
         sw, sh = right - left, bottom - top
         x, y, width, height = rect
-        if stretch and name == "panel_flat":
-            # 패널은 9조각으로 늘려 얇은 자금 바에서도 테두리 두께를 유지한다.
-            source_x = (left, left + 32, right - 32, right)
-            source_y = (top, top + 32, bottom - 32, bottom)
-            target_x = (x, x + 12, x + width - 12, x + width)
-            target_y = (y + height, y + height - 12, y + 12, y)
-            for row in range(3):
-                for column in range(3):
-                    cw = source_x[column + 1] - source_x[column]
-                    ch = source_y[row + 1] - source_y[row]
-                    dw = target_x[column + 1] - target_x[column]
-                    dh = target_y[row] - target_y[row + 1]
-                    image.clip_draw(source_x[column], image.h - source_y[row + 1], cw, ch,
-                                    target_x[column] + dw / 2, target_y[row + 1] + dh / 2,
-                                    round(dw), round(dh))
-            return
-        if not stretch:
-            ratio = min(width / sw, height / sh)
-            width, height = sw * ratio, sh * ratio
+        palette = {
+            "panel_flat": LOBBY_PANEL,
+            "stage_card_flat": LOBBY_STAGE,
+            "stage_locked_flat": LOBBY_LOCKED,
+        }
+        color = (0, 0, 0) if silhouette else tint or palette.get(name, (255, 255, 255))
+        pico2d.SDL_SetTextureColorMod(image.texture, *color)
         if silhouette:
-            pico2d.SDL_SetTextureColorMod(image.texture, 0, 0, 0)
-            image.opacify(0.19)
+            image.opacify(0.23)
         try:
+            if stretch and name == "panel_flat":
+                # 9분할로 넓고 얇은 패널에서도 테두리 두께를 유지한다.
+                source_x = (left, left + 32, right - 32, right)
+                source_y = (top, top + 32, bottom - 32, bottom)
+                target_x = (x, x + 12, x + width - 12, x + width)
+                target_y = (y + height, y + height - 12, y + 12, y)
+                for row in range(3):
+                    for column in range(3):
+                        cw = source_x[column + 1] - source_x[column]
+                        ch = source_y[row + 1] - source_y[row]
+                        dw = target_x[column + 1] - target_x[column]
+                        dh = target_y[row] - target_y[row + 1]
+                        image.clip_draw(source_x[column], image.h - source_y[row + 1], cw, ch,
+                                        target_x[column] + dw / 2, target_y[row + 1] + dh / 2,
+                                        round(dw), round(dh))
+                return
+            if not stretch:
+                ratio = min(width / sw, height / sh)
+                width, height = sw * ratio, sh * ratio
             image.clip_draw(left, image.h - bottom, sw, sh,
                             x + rect[2] / 2, y + rect[3] / 2, round(width), round(height))
         finally:
-            if silhouette:
-                pico2d.SDL_SetTextureColorMod(image.texture, 255, 255, 255)
-                image.opacify(1.0)
+            # 공유 텍스처의 색과 투명도가 다음 에셋에 남지 않도록 복구한다.
+            pico2d.SDL_SetTextureColorMod(image.texture, 255, 255, 255)
+            image.opacify(1.0)
 
     def text(self, text, x, y, size=16, color=NAVY, center=False, max_width=None):
         font = self.fonts[size]
@@ -86,7 +95,7 @@ class LobbyUI:
         amount = 2 if hovered else 0
         self.art("button_primary" if primary and enabled else "button_secondary",
                  (x - amount, y - amount, w + amount * 2, h + amount * 2), stretch=True)
-        color = (255, 255, 255) if primary and enabled else NAVY if enabled else MUTED
+        color = (255, 255, 255) if primary and enabled else NAVY if enabled else LOBBY_MUTED
         self.text(label, x + w / 2, y + h / 2 + 1, size, color, center=True)
 
     def click(self, x, y):
@@ -116,11 +125,11 @@ class LobbyUI:
         return None
 
     def draw(self, mouse):
-        self.art("background", (0, 0, WIDTH, HEIGHT), stretch=True)
+        rounded_box((0, 0, WIDTH, HEIGHT), LOBBY_BACKGROUND, 0)
         self.art("logo", (20, 515, 225, 72))
         self.art("market_header", (257, 500, 270, 93))
         self.art("dokkaebi", (509, 521, 57, 63))
-        self.text("닉네임", 594, 580, 13, MUTED)
+        self.text("닉네임", 594, 580, 13, LOBBY_MUTED)
         self.text(self.session.nickname, 594, 555, 20, max_width=187)
         self.button(LOGOUT, "로그아웃", mouse, size=14)
         self.button(QUIT, "종료", mouse, size=14)
@@ -130,7 +139,7 @@ class LobbyUI:
         self.text("공용 인수 자금", 77, 458, 20)
         self.text("0원 (임시) / 목표 미정", 265, 458, 18)
         self.art("progress_track", (535, 451, 224, 14), stretch=True)
-        self.text("목표액 확정 후 진행률 표시", 647, 436, 12, MUTED, center=True)
+        self.text("목표액 확정 후 진행률 표시", 647, 436, 12, LOBBY_MUTED, center=True)
 
         self.art("panel_flat", (16, 112, 470, 295), stretch=True)
         self.art("cart_icon", (33, 366, 32, 29))
@@ -142,7 +151,7 @@ class LobbyUI:
         self.text("STAGE 2", 360, 328, 24, (104, 108, 114), center=True)
         self.art("badge", (77, 291, 120, 24), stretch=True)
         self.text("도깨비 1마리", 137, 303, 16, center=True)
-        self.text("도깨비 2마리", 360, 303, 16, MUTED, center=True)
+        self.text("도깨비 2마리", 360, 303, 16, LOBBY_MUTED, center=True)
         self.art("dokkaebi", (82, 177, 110, 106))
         self.art("dokkaebi", (281, 192, 95, 86), silhouette=True)
         self.art("dokkaebi", (346, 192, 95, 86), silhouette=True)
@@ -150,21 +159,21 @@ class LobbyUI:
         self.art("badge", (63, 145, 148, 25), stretch=True)
         selected = self.session.selected_stage == 1
         self.text("선택 완료" if selected else "선택 가능", 137, 157, 16, BLUE, center=True)
-        self.text("1스테이지 완료 시 해금", 360, 157, 14, MUTED, center=True)
+        self.text("1스테이지 완료 시 해금", 360, 157, 14, LOBBY_MUTED, center=True)
         if inside(*mouse, STAGE_ONE):
             self.text("클릭하여 선택", 137, 183, 12, BLUE, center=True)
 
         self.art("panel_flat", (498, 112, 286, 295), stretch=True)
         self.art("crown_icon", (515, 369, 29, 25))
         self.text("마트 인수 기여도", 550, 382, 22, max_width=218)
-        self.text("누적 보수 기준", 550, 357, 13, MUTED)
+        self.text("누적 보수 기준", 550, 357, 13, LOBBY_MUTED)
         rounded_box((515, 344, 251, 1), (129, 154, 194), 0)
         self.art("badge", (512, 306, 258, 29), stretch=True)
         self.text("순위", 539, 321, 14, center=True)
         self.text("닉네임", 621, 321, 14, center=True)
         self.text("기여액", 729, 321, 14, center=True)
-        self.text("아직 등록된 기록이 없어요", 641, 259, 16, MUTED, center=True)
-        self.text("함께 마트를 채워 나가요!", 641, 232, 13, MUTED, center=True)
+        self.text("아직 등록된 기록이 없어요", 641, 259, 16, LOBBY_MUTED, center=True)
+        self.text("함께 마트를 채워 나가요!", 641, 232, 13, LOBBY_MUTED, center=True)
         rounded_box((515, 190, 251, 1), (129, 154, 194), 0)
         self.text("내 누적 기여액", 519, 157, 16)
         self.text("0원 (임시)", 704, 157, 18, BLUE, center=True)
@@ -176,10 +185,10 @@ class LobbyUI:
         if self.development_mode:
             self.button(PREVIEW, "엔딩 미리보기", mouse, size=13)
         self.text("기여도와 자금은 임시 표시이며, 현재는 실행 중에만 상태가 유지됩니다.",
-                  400, 21, 12, MUTED, center=True)
+                  400, 21, 12, LOBBY_MUTED, center=True)
 
     def draw_preview(self, mouse, ending=False):
-        self.art("background", (0, 0, WIDTH, HEIGHT), stretch=True)
+        rounded_box((0, 0, WIDTH, HEIGHT), LOBBY_BACKGROUND, 0)
         self.art("panel_flat", (105, 105, 590, 415), stretch=True)
         self.art("market_header", (215, 324, 370, 138))
         self.art("dokkaebi", (545, 320, 85, 100))
@@ -193,7 +202,7 @@ class LobbyUI:
             self.text(f"{self.session.selected_stage}단계를 선택했습니다.", 400, 300, 28, center=True)
             self.text("장보기 기능은 개발 중입니다.", 400, 257, 18, center=True)
             self.text("미리보기에서는 보상과 스테이지 해금이 발생하지 않아요.",
-                      400, 229, 14, MUTED, center=True)
+                      400, 229, 14, LOBBY_MUTED, center=True)
         self.button(RETURN, "로비로 돌아가기", mouse, primary=True, size=18)
         self.button(QUIT, "종료", mouse, size=14)
 

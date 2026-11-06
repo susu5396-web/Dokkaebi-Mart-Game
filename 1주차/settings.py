@@ -11,3 +11,11 @@ ASSET_DIR = Path(__file__).resolve().parent
 START_ASSET_DIR = ASSET_DIR / "start assets"
 LOBBY_ASSET_DIR = ASSET_DIR / "lobby assets" / "images" / "lobby"
 DEVELOPMENT_MODE = False
+
+# 로비·미리보기 색상. 흰 외곽선이 있는 에셋과 구분되는 연한 네이비 계열.
+LOBBY_BACKGROUND = (207, 220, 237)
+LOBBY_PANEL = (192, 208, 230)
+LOBBY_STAGE = (167, 190, 220)
+LOBBY_LOCKED = (184, 198, 217)
+LOBBY_ACCOUNT = (224, 234, 248)
+LOBBY_MUTED = (67, 87, 117)
