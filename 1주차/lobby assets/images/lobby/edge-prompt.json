@@ -1,0 +1,6 @@
+{
+  "generator": "Built-in image_gen",
+  "source": "dokkaebi.png",
+  "output": "dokkaebi_clean.png",
+  "prompt": "Use case: precise-object-edit / identity-preserve. Clean ONLY the outer contour of this exact existing game dokkaebi sprite. Remove the white sticker border/white halo and ragged little white fringe pixels completely. Replace its outermost rim with one smooth thin dark navy-green outline with clean antialiasing directly against transparent background. Retain the character EXACTLY: round pale mint-green top-down body, blue teardrop horn with navy base, tiny side bumps as hands, two vivid pink cheek marks each side near bottom, blue smile AND TWO BLUE FANGS (not white), no visible eyes in blank center, no feet. Do NOT change character proportions, face, pose, color, highlights, mouth or fangs. No white outer edge anywhere. Single complete isolated sprite, no text, no shadows, no other objects. Transparent background. This is edge cleanup, not a redesign."
+}

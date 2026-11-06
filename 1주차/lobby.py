@@ -15,8 +15,10 @@ from ui import NAVY, BLUE, inside, rounded_box, text_width, load_ui_image
 STAGE_ONE = (32, 132, 211, 220)
 STAGE_TWO = (255, 132, 211, 220)
 PLAY = (250, 40, 300, 48)
-LOGOUT = (596, 505, 105, 30)
-QUIT = (709, 505, 75, 30)
+HEADER_MARKET = (16, 493, 548, 103)
+ACCOUNT_PANEL = (576, 498, 208, 94)
+LOGOUT = (588, 509, 100, 28)
+QUIT = (697, 509, 74, 28)
 PREVIEW = (594, 60, 176, 26)
 RETURN = (270, 142, 260, 48)
 
@@ -126,11 +128,10 @@ class LobbyUI:
 
     def draw(self, mouse):
         rounded_box((0, 0, WIDTH, HEIGHT), LOBBY_BACKGROUND, 0)
-        self.art("logo", (20, 515, 225, 72))
-        self.art("market_header", (257, 500, 270, 93))
-        self.art("dokkaebi", (509, 521, 57, 63))
-        self.text("닉네임", 594, 580, 13, LOBBY_MUTED)
-        self.text(self.session.nickname, 594, 555, 20, max_width=187)
+        self.art("market_banner", HEADER_MARKET, stretch=True)
+        self.art("panel_flat", ACCOUNT_PANEL, stretch=True, tint=LOBBY_ACCOUNT)
+        self.text("닉네임", 590, 577, 12, LOBBY_MUTED)
+        self.text(self.session.nickname, 590, 554, 20, max_width=180)
         self.button(LOGOUT, "로그아웃", mouse, size=14)
         self.button(QUIT, "종료", mouse, size=14)
 
@@ -152,9 +153,9 @@ class LobbyUI:
         self.art("badge", (77, 291, 120, 24), stretch=True)
         self.text("도깨비 1마리", 137, 303, 16, center=True)
         self.text("도깨비 2마리", 360, 303, 16, LOBBY_MUTED, center=True)
-        self.art("dokkaebi", (82, 177, 110, 106))
-        self.art("dokkaebi", (281, 192, 95, 86), silhouette=True)
-        self.art("dokkaebi", (346, 192, 95, 86), silhouette=True)
+        self.art("dokkaebi_clean", (82, 177, 110, 106))
+        self.art("dokkaebi_clean", (281, 192, 95, 86), silhouette=True)
+        self.art("dokkaebi_clean", (346, 192, 95, 86), silhouette=True)
         self.art("lock_icon", (327, 195, 69, 83))
         self.art("badge", (63, 145, 148, 25), stretch=True)
         selected = self.session.selected_stage == 1
@@ -190,8 +191,7 @@ class LobbyUI:
     def draw_preview(self, mouse, ending=False):
         rounded_box((0, 0, WIDTH, HEIGHT), LOBBY_BACKGROUND, 0)
         self.art("panel_flat", (105, 105, 590, 415), stretch=True)
-        self.art("market_header", (215, 324, 370, 138))
-        self.art("dokkaebi", (545, 320, 85, 100))
+        self.art("market_banner", (135, 336, 530, 116))
         if ending:
             self.text("엔딩 미리보기 · 개발 전용", 400, 490, 16, BLUE, center=True)
             self.text("도깨비 마트 인수 완료!", 400, 300, 28, center=True)
