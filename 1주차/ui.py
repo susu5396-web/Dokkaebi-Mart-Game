@@ -88,7 +88,7 @@ class NicknameUI:
         rounded_box((135, 105, 530, 390), NAVY, 24)
         rounded_box((138, 108, 524, 384), (255, 252, 243), 22)
         rounded_box((325, 450, 150, 26), (228, 237, 246), 12)
-        centered(self.small, "중복 닉네임 불가", 463, BLUE)
+        centered(self.small, "닉네임 · 최대 12자", 463, BLUE)
         if self.saved_name:
             centered(self.title_font, "도깨비 마트에 오신 걸 환영해요!", 398)
             centered(self.font, self.saved_name + "님, 반가워요!", 345)
