@@ -21,6 +21,8 @@ def main():
     try:
         background = pico2d.load_image(str(ASSET_DIR / "start.png"))
         start_button = pico2d.load_image(str(ASSET_DIR / "start_button.png"))
+        name_background = pico2d.load_image(str(ASSET_DIR / "name_background.png"))
+        scene = "title"
         mouse_x, mouse_y = ctypes.c_int(), ctypes.c_int()
         scale = 1.0
         previous_time = perf_counter()
@@ -36,6 +38,12 @@ def main():
                     running = False
                 elif event.type == pico2d.SDL_KEYDOWN and event.key == pico2d.SDLK_ESCAPE:
                     running = False
+                elif scene == "title" and event.type == pico2d.SDL_MOUSEBUTTONDOWN:
+                    if event.button == pico2d.SDL_BUTTON_LEFT and (
+                        abs(event.x - BUTTON_X) <= BUTTON_WIDTH / 2
+                        and abs(HEIGHT - 1 - event.y - BUTTON_Y) <= BUTTON_HEIGHT / 2
+                    ):
+                        scene = "nickname"
 
             if not running:
                 break
@@ -52,11 +60,14 @@ def main():
             scale += (target_scale - scale) * min(1.0, dt * 16.0)
 
             pico2d.clear_canvas()
-            background.draw(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT)
-            start_button.draw(
-                BUTTON_X, BUTTON_Y,
-                round(BUTTON_WIDTH * scale), round(BUTTON_HEIGHT * scale),
-            )
+            if scene == "title":
+                background.draw(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT)
+                start_button.draw(
+                    BUTTON_X, BUTTON_Y,
+                    round(BUTTON_WIDTH * scale), round(BUTTON_HEIGHT * scale),
+                )
+            else:
+                name_background.draw(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT)
             pico2d.update_canvas()
             pico2d.delay(0.01)
     finally:
