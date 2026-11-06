@@ -38,6 +38,22 @@ class LobbyUI:
         left, top, right, bottom = self.bounds[name]
         sw, sh = right - left, bottom - top
         x, y, width, height = rect
+        if stretch and name == "panel_flat":
+            # 패널은 9조각으로 늘려 얇은 자금 바에서도 테두리 두께를 유지한다.
+            source_x = (left, left + 32, right - 32, right)
+            source_y = (top, top + 32, bottom - 32, bottom)
+            target_x = (x, x + 12, x + width - 12, x + width)
+            target_y = (y + height, y + height - 12, y + 12, y)
+            for row in range(3):
+                for column in range(3):
+                    cw = source_x[column + 1] - source_x[column]
+                    ch = source_y[row + 1] - source_y[row]
+                    dw = target_x[column + 1] - target_x[column]
+                    dh = target_y[row] - target_y[row + 1]
+                    image.clip_draw(source_x[column], image.h - source_y[row + 1], cw, ch,
+                                    target_x[column] + dw / 2, target_y[row + 1] + dh / 2,
+                                    round(dw), round(dh))
+            return
         if not stretch:
             ratio = min(width / sw, height / sh)
             width, height = sw * ratio, sh * ratio
@@ -109,19 +125,19 @@ class LobbyUI:
         self.button(LOGOUT, "로그아웃", mouse, size=14)
         self.button(QUIT, "종료", mouse, size=14)
 
-        self.art("panel", (16, 423, 768, 65), stretch=True)
+        self.art("panel_flat", (16, 423, 768, 65), stretch=True)
         self.art("coin_icon", (29, 439, 37, 36))
         self.text("공용 인수 자금", 77, 458, 20)
         self.text("0원 (임시) / 목표 미정", 265, 458, 18)
         self.art("progress_track", (535, 451, 224, 14), stretch=True)
         self.text("목표액 확정 후 진행률 표시", 647, 436, 12, MUTED, center=True)
 
-        self.art("panel", (16, 112, 470, 295), stretch=True)
+        self.art("panel_flat", (16, 112, 470, 295), stretch=True)
         self.art("cart_icon", (33, 366, 32, 29))
         self.text("스테이지 선택", 76, 380, 24)
         rounded_box((34, 361, 434, 1), (129, 154, 194), 0)
-        self.art("stage_card", STAGE_ONE, stretch=True)
-        self.art("stage_card_locked", STAGE_TWO, stretch=True)
+        self.art("stage_card_flat", STAGE_ONE, stretch=True)
+        self.art("stage_locked_flat", STAGE_TWO, stretch=True)
         self.text("STAGE 1", 137, 328, 24, center=True)
         self.text("STAGE 2", 360, 328, 24, (104, 108, 114), center=True)
         self.art("badge", (77, 291, 120, 24), stretch=True)
@@ -138,7 +154,7 @@ class LobbyUI:
         if inside(*mouse, STAGE_ONE):
             self.text("클릭하여 선택", 137, 183, 12, BLUE, center=True)
 
-        self.art("panel", (498, 112, 286, 295), stretch=True)
+        self.art("panel_flat", (498, 112, 286, 295), stretch=True)
         self.art("crown_icon", (515, 369, 29, 25))
         self.text("마트 인수 기여도", 550, 382, 22, max_width=218)
         self.text("누적 보수 기준", 550, 357, 13, MUTED)
@@ -164,7 +180,7 @@ class LobbyUI:
 
     def draw_preview(self, mouse, ending=False):
         self.art("background", (0, 0, WIDTH, HEIGHT), stretch=True)
-        self.art("panel", (105, 105, 590, 415), stretch=True)
+        self.art("panel_flat", (105, 105, 590, 415), stretch=True)
         self.art("market_header", (215, 324, 370, 138))
         self.art("dokkaebi", (545, 320, 85, 100))
         if ending:

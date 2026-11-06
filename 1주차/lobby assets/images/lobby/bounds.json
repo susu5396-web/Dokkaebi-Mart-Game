@@ -65,25 +65,25 @@
     2104,
     724
   ],
-  "panel": [
-    0,
-    0,
-    1536,
-    1024
-  ],
   "progress_track": [
     0,
     25,
     2149,
     724
   ],
-  "stage_card": [
-    13,
+  "panel_flat": [
     0,
-    1074,
+    0,
+    1536,
+    1024
+  ],
+  "stage_card_flat": [
+    0,
+    0,
+    1086,
     1448
   ],
-  "stage_card_locked": [
+  "stage_locked_flat": [
     0,
     0,
     1086,

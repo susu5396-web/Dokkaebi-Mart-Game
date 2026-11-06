@@ -1,0 +1,8 @@
+{
+  "generator": "Built-in image_gen",
+  "prompts": {
+    "panel_flat": "One EMPTY flat game UI panel occupying the entire image. Canvas background solid warm off-white #fffdf7, fully OPAQUE. A single very thin dark navy rounded rectangular border inset 5 pixels from edges. Interior EXACTLY same solid uniform off-white #fffdf7 with alpha255. Landscape 3:2 aspect ratio. Pure flat graphic. NO transparency, NO shadows, NO textures, NO gradients, NO glow, NO blur, NO bevels, NO text, NO icons. Crisp fine navy line border, modest rounded corners.",
+    "stage_card_flat": "One EMPTY flat UI stage card occupying the entire image, portrait 3:4. Solid fully OPAQUE ivory white #fffdf7 background. Single cobalt-blue rounded rectangular outline inset 6 pixels from edges, stroke 6 pixels, modest round corners. Interior solid uniform #fffdf7. Pure flat graphic. NO transparency, NO shadows, NO textures, NO gradients, NO blur, NO text, NO icons.",
+    "stage_locked_flat": "One EMPTY flat UI disabled stage card occupying the entire image, portrait 3:4. Solid fully OPAQUE very pale gray #f0f0ef background. Single medium light gray rounded rectangular outline inset 6 pixels from edges, stroke 3 pixels, modest round corners. Interior EXACTLY uniform #f0f0ef alpha255. Pure flat graphic. NO transparency, NO shadows, NO textures, NO gradients, NO blur, NO text, NO icons."
+  }
+}
