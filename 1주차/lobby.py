@@ -6,7 +6,7 @@ from pathlib import Path
 import pico2d
 
 from settings import WIDTH, HEIGHT, LOBBY_ASSET_DIR
-from ui import NAVY, BLUE, MUTED, inside, rounded_box, text_width
+from ui import NAVY, BLUE, MUTED, inside, rounded_box, text_width, load_ui_image
 
 
 STAGE_ONE = (32, 132, 211, 220)
@@ -26,7 +26,7 @@ class LobbyUI:
         self.images = {}
         self.bounds = json.loads((LOBBY_ASSET_DIR / "bounds.json").read_text(encoding="utf-8"))
         for name in self.bounds:
-            self.images[name] = pico2d.load_image(str(LOBBY_ASSET_DIR / (name + ".png")))
+            self.images[name] = load_ui_image(LOBBY_ASSET_DIR / (name + ".png"))
         fonts = Path(os.environ.get("WINDIR", "C:/Windows")) / "Fonts"
         self.fonts = {
             size: pico2d.load_font(str(fonts / ("malgunbd.ttf" if size >= 18 else "malgun.ttf")), size)

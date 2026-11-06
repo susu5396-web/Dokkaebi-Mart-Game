@@ -16,6 +16,13 @@ CONFIRM = (270, 174, 260, 52)
 BACK = (334, 126, 132, 32)
 
 
+def load_ui_image(path):
+    """고해상도 UI를 축소할 때 픽셀 경계가 튀지 않도록 선형 보간한다."""
+    image = pico2d.load_image(str(path))
+    pico2d.SDL_SetTextureScaleMode(image.texture, pico2d.SDL_ScaleModeLinear)
+    return image
+
+
 def inside(x, y, rect):
     left, bottom, width, height = rect
     return left <= x <= left + width and bottom <= y <= bottom + height

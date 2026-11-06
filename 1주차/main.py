@@ -8,7 +8,7 @@ from settings import (
     HOVER_SCALE, ASSET_DIR, START_ASSET_DIR, DEVELOPMENT_MODE,
 )
 from session import Session
-from ui import NicknameUI, inside, FIELD, CONFIRM, BACK
+from ui import NicknameUI, inside, load_ui_image, FIELD, CONFIRM, BACK
 from lobby import LobbyUI
 
 
@@ -24,9 +24,9 @@ def collect_events():
 
 class Game:
     def __init__(self, development_mode=DEVELOPMENT_MODE):
-        self.background = pico2d.load_image(str(START_ASSET_DIR / "start.png"))
-        self.start_button = pico2d.load_image(str(START_ASSET_DIR / "start_button.png"))
-        self.name_background = pico2d.load_image(str(ASSET_DIR / "name_background.png"))
+        self.background = load_ui_image(START_ASSET_DIR / "start.png")
+        self.start_button = load_ui_image(START_ASSET_DIR / "start_button.png")
+        self.name_background = load_ui_image(ASSET_DIR / "name_background.png")
         self.session = Session()
         self.nickname_ui = NicknameUI()
         self.lobby = LobbyUI(self.session, development_mode)
