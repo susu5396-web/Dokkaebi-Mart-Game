@@ -133,7 +133,7 @@ class LobbyUI:
         self.art("lock_icon", (327, 195, 69, 83))
         self.art("badge", (63, 145, 148, 25), stretch=True)
         selected = self.session.selected_stage == 1
-        self.text("선택 완료 ✓" if selected else "선택 가능", 137, 157, 16, BLUE, center=True)
+        self.text("선택 완료" if selected else "선택 가능", 137, 157, 16, BLUE, center=True)
         self.text("1스테이지 완료 시 해금", 360, 157, 14, MUTED, center=True)
         if inside(*mouse, STAGE_ONE):
             self.text("클릭하여 선택", 137, 183, 12, BLUE, center=True)
