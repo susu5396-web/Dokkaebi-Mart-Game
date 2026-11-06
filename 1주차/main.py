@@ -99,16 +99,15 @@ class NicknameUI:
         rounded_box((135, 105, 530, 390), NAVY, 24)
         rounded_box((138, 108, 524, 384), (255, 252, 243), 22)
         rounded_box((325, 450, 150, 26), (228, 237, 246), 12)
-        centered(self.small, "도깨비 마트 · 입장 카드", 463, BLUE)
+        centered(self.small, "중복 닉네임 불가", 463, BLUE)
         if self.saved_name:
             centered(self.title_font, "도깨비 마트에 오신 걸 환영해요!", 398)
             centered(self.font, self.saved_name + "님, 반가워요!", 345)
             centered(self.font, "닉네임이 준비되었어요.", 310)
             centered(self.small, "이 이름으로 장보기 소동을 함께해요!", 283, MUTED)
-            label = "닉네임 수정"
+            label = "로비 입장"
         else:
-            centered(self.title_font, "어떤 이름으로 불러드릴까요?", 408)
-            centered(self.small, "도깨비 마트에서 사용할 닉네임을 적어 주세요.", 372, MUTED)
+            centered(self.title_font, "원하시는 이름을 적어 주세요.", 408)
             border = BLUE if self.focused else (174, 187, 201)
             rounded_box(FIELD, border, 12)
             rounded_box((192, 280, 416, 58), (255, 255, 252), 10)
@@ -127,7 +126,7 @@ class NicknameUI:
             self.small.draw(562, 259, f"{len(self.value)} / 12", MUTED)
             if self.error:
                 centered(self.small, self.error, 235, (177, 65, 56))
-            label = "이 이름으로 할게요"
+            label = "완료"
         rounded_box((270, 169, 260, 52), NAVY, 14)
         rounded_box(CONFIRM, (85, 139, 203) if inside(x, y, CONFIRM) else BLUE, 14)
         centered(self.font, label, 200, (255, 255, 255))
