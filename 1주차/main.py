@@ -1,4 +1,4 @@
-"""도깨비 마트 시작 화면: 배경과 마우스 오버 버튼."""
+"""도깨비 마트 시작 화면과 닉네임 입력·확인 화면."""
 
 import ctypes
 import math
@@ -9,7 +9,7 @@ from time import perf_counter
 import pico2d
 
 
-WIDTH, HEIGHT = 800,600
+WIDTH, HEIGHT = 800, 600
 BUTTON_WIDTH, BUTTON_HEIGHT = 300, 100
 BUTTON_MARGIN = 24
 BUTTON_X = WIDTH - BUTTON_MARGIN - BUTTON_WIDTH / 2
@@ -101,8 +101,9 @@ class NicknameUI:
         rounded_box((325, 450, 150, 26), (228, 237, 246), 12)
         centered(self.small, "도깨비 마트 · 입장 카드", 463, BLUE)
         if self.saved_name:
-            centered(self.title_font, "반가워요, " + self.saved_name + "님!", 386)
-            centered(self.font, "닉네임이 준비되었어요.", 320)
+            centered(self.title_font, "도깨비 마트에 오신 걸 환영해요!", 398)
+            centered(self.font, self.saved_name + "님, 반가워요!", 345)
+            centered(self.font, "닉네임이 준비되었어요.", 310)
             centered(self.small, "이 이름으로 장보기 소동을 함께해요!", 283, MUTED)
             label = "닉네임 수정"
         else:
