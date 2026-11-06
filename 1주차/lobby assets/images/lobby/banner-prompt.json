@@ -1,0 +1,6 @@
+{
+  "generator": "Built-in image_gen",
+  "source": "market_header.png",
+  "output": "market_banner.png",
+  "prompt": "Use case: precise-object-edit. Edit the supplied existing supermarket facade into an ULTRA-WIDE LOW horizontal game lobby header illustration. Preserve the cozy handpainted navy outlines, blue-and-ivory striped awning, cream building walls, blue glass central doors, produce crates. REDESIGN/EXTEND architecture horizontally, do not merely stretch existing pixels: a much longer single awning across additional shop windows and vegetable display bays, low roof, large simple readable shapes, fewer tiny details. The visible building must be approximately SEVEN TIMES AS WIDE AS IT IS TALL (7:1); use transparent padding above/below if output canvas is less wide. Door near left-of-center. Rightmost quarter only simple blue windows because the game places a separate account panel over it. This will be displayed about 768x104 pixels. Tight clean navy silhouette, no white sticker rim, no ragged painted edges. Transparent outside facade. No lettering or logo, no character, no dokkaebi, no people. Entire building uncut, full facade visible."
+}
