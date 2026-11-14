@@ -1,8 +1,13 @@
 ﻿"""시작 → 닉네임 → 로비 → 스테이지 미리보기의 공통 게임 루프."""
 import ctypes
+import sys
 from time import perf_counter
+from pathlib import Path
 
 import pico2d
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "1주차"))
+
 from settings import (
     WIDTH, HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_X, BUTTON_Y,
     HOVER_SCALE, ASSET_DIR, START_ASSET_DIR, DEVELOPMENT_MODE,
