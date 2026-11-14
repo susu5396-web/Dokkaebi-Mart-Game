@@ -1,0 +1,35 @@
+"""화면과 독립된 한 판의 상품 배치 및 카트 데이터."""
+import random
+from catalog import PRODUCTS, GROUPS
+
+
+class MarketState:
+    def __init__(self, seed=None):
+        rng = random.Random(seed)
+        self.layout = []
+        for category, groups in enumerate(GROUPS):
+            ordered = []
+            for group, _, _ in groups:
+                ids = [p.id for p in PRODUCTS.values()
+                       if p.category == category and p.group == group]
+                rng.shuffle(ids)
+                ordered.extend(ids)
+            self.layout.append([ordered[i:i + 4] for i in range(0, 32, 4)])
+        self.required = {pid: rng.randint(1, 3)
+                         for pid in rng.sample(list(PRODUCTS), 5)}
+        self.inventory = {}
+        self.remaining = 240.0
+
+    def add(self, pid):
+        if pid in PRODUCTS:
+            self.inventory[pid] = self.inventory.get(pid, 0) + 1
+
+    def discard(self, pid):
+        if pid not in self.inventory:
+            return
+        self.inventory[pid] -= 1
+        if self.inventory[pid] == 0:
+            del self.inventory[pid]
+
+    def update(self, dt):
+        self.remaining = max(0.0, self.remaining - dt)
