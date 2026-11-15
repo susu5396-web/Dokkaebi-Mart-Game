@@ -3,8 +3,8 @@ from catalog import CATEGORIES, PRODUCTS
 from market_art import box
 from market_world import SHELVES, WORLD_W, WORLD_H, contains
 
-LIST_RECT = (960, 345, 280, 350)
-CART_RECT = (960, 720, 280, 224)
+LIST_RECT = (920, 345, 300, 375)
+CART_RECT = (930, 724, 280, 224)
 
 
 def timer_color(seconds):
@@ -39,14 +39,14 @@ class MarketHUD:
             self.slots(state)
 
     def draw(self, art, state, actor):
-        box((920, 0, 360, 960), (224, 232, 226))
-        art.text('도깨비 마트', 1100, 24, 25, center=True)
+        box((860, 0, 420, 960), (224, 232, 226))
+        art.text('도깨비 마트', 1070, 24, 25, center=True)
         art.draw('ui/timer_panel', (16, 16, 280, 94))
         art.text(f'{int(state.remaining)} 초', 182, 66, 30, color=timer_color(state.remaining), center=True)
         # 지도에는 매대 카테고리와 플레이어만 표시한다.
-        art.draw('ui/minimap_panel', (960, 48, 280, 280))
-        art.text('마트 지도', 1115, 88, 19, center=True)
-        mx, my, mw, mh = 983, 114, 233, 164
+        art.draw('ui/minimap_panel', (920, 40, 300, 300))
+        art.text('마트 지도', 1085, 83, 19, center=True)
+        mx, my, mw, mh = 945, 111, 250, 176
         for i, (sx, sy, sw, sh) in enumerate(SHELVES):
             rx, ry = mx + sx / WORLD_W * mw, my + sy / WORLD_H * mh
             box((rx, ry, max(8, sw / WORLD_W * mw), sh / WORLD_H * mh), (155, 177, 152))
@@ -55,15 +55,15 @@ class MarketHUD:
                 art.text(char, rx + 5, ry + 22 + j * 19, 16, center=True)
         px, py = mx + actor.x / WORLD_W * mw, my + actor.y / WORLD_H * mh
         box((px - 4, py - 4, 8, 8), (30, 100, 221))
-        art.text('파랑: 플레이어', 1100, 307, 15, center=True)
+        art.text('파랑: 플레이어', 1070, 318, 15, center=True)
         art.draw('ui/shopping_list_panel', LIST_RECT)
         x, y, w, h = LIST_RECT
         for index, (pid, count) in enumerate(state.required.items()):
             product = PRODUCTS[pid]
             cy = y + h * (.365 + index * .103)
             art.draw('icons/' + product.icon, (x + 32, cy - 17, 34, 34), trim=True)
-            art.lines(product.name, x + 142, cy, 142, 15)
-            art.text(f'{count}개', x + 235, cy, 16, center=True)
+            art.lines(product.name, x + 152, cy, 152, 15)
+            art.text(f'{count}개', x + 255, cy, 16, center=True)
         art.draw('ui/cart_inventory_panel', CART_RECT)
         for (sx, sy, sw, sh), pid in self.slots(state):
             product = PRODUCTS[pid]
@@ -72,6 +72,6 @@ class MarketHUD:
             box((sx + sw - 28, sy + 20, 25, 17), (66, 116, 185))
             art.text(f'x{state.inventory[pid]}', sx + sw - 16, sy + 28, 11, (255, 255, 255), True)
         if not state.inventory:
-            art.text('카트가 비어 있습니다', 1100, 839, 14, center=True)
+            art.text('카트가 비어 있습니다', 1070, 839, 14, center=True)
         if len(state.inventory) > 6:
-            art.text('카트 위에서 휠: 다른 상품 보기', 1100, 952, 12, center=True)
+            art.text('카트 위에서 휠: 다른 상품 보기', 1070, 952, 12, center=True)

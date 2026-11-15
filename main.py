@@ -31,7 +31,7 @@ def collect_events():
 
 
 class Game:
-    def __init__(self, development_mode=DEVELOPMENT_MODE):
+    def __init__(self, development_mode=DEVELOPMENT_MODE, animate_transitions=True):
         self.background = load_ui_image(START_ASSET_DIR / "start.png")
         self.start_button = load_ui_image(START_ASSET_DIR / "start_button.png")
         self.name_background = load_ui_image(ASSET_DIR / "name_background.png")
@@ -44,6 +44,9 @@ class Game:
         self.scale = 1.0
         self.mouse = (-1, -1)
         self.market = None
+        self.animate_transitions = animate_transitions
+        self.fade_phase = None
+        self.fade_time = 0.0
         pico2d.SDL_StopTextInput()
 
     def request_scene(self, scene):
@@ -61,6 +64,17 @@ class Game:
     def apply_transition(self):
         if self.pending_scene is None:
             return
+        if self.fade_phase is not None:
+            return
+        if self.animate_transitions and 'stage' in (self.scene, self.pending_scene):
+            self.fade_phase = 'out'
+            self.fade_time = 0.0
+            if self.market:
+                self.market.keys.clear()
+            return
+        self.commit_transition()
+
+    def commit_transition(self):
         self.nickname_ui.focus(False)
         if self.scene == 'stage' and self.pending_scene == 'lobby':
             self.session.selected_stage = None
@@ -74,7 +88,7 @@ class Game:
         canvas = pico2d.open_canvas.__globals__
         pico2d.SDL_SetHint(b'SDL_RENDER_SCALE_QUALITY', b'1')
         logical_w, logical_h = (SCREEN_W, SCREEN_H) if self.scene == 'stage' else (WIDTH, HEIGHT)
-        w, h = (1120, 840) if self.scene == 'stage' else (WIDTH, HEIGHT)
+        w, h = (960, 720) if self.scene == 'stage' else (WIDTH, HEIGHT)
         pico2d.SDL_SetWindowSize(canvas['window'], w, h)
         pico2d.SDL_RenderSetLogicalSize(canvas['renderer'], logical_w, logical_h)
         pico2d.SDL_SetWindowPosition(canvas['window'], pico2d.SDL_WINDOWPOS_CENTERED, pico2d.SDL_WINDOWPOS_CENTERED)
@@ -98,7 +112,7 @@ class Game:
             self.running = False
             return
         for event in events:
-            if self.pending_scene is not None or not self.running:
+            if self.pending_scene is not None or self.fade_phase is not None or not self.running:
                 continue
             if self.scene == 'stage':
                 self.request_scene(self.market.handle(event))
@@ -143,6 +157,18 @@ class Game:
             self.apply_transition()
 
     def update(self, dt):
+        if self.fade_phase is not None:
+            self.fade_time += dt
+            if self.fade_phase == 'out' and self.fade_time >= .25:
+                # 완전히 검은 프레임을 먼저 표시한 뒤 다음 프레임에서 창을 변경한다.
+                self.fade_phase = 'switch'
+            elif self.fade_phase == 'switch':
+                self.commit_transition()
+                self.fade_phase = 'in'
+                self.fade_time = 0.0
+            elif self.fade_phase == 'in' and self.fade_time >= .35:
+                self.fade_phase = None
+            return
         if self.scene == 'stage':
             self.market.update(dt)
             return
@@ -172,6 +198,14 @@ class Game:
             self.market.draw()
         else:
             self.lobby.draw_preview(self.mouse, self.scene == "ending")
+        if self.fade_phase is not None:
+            opacity = (min(1.0, self.fade_time / .25) if self.fade_phase == 'out'
+                       else max(0.0, 1.0 - self.fade_time / .35) if self.fade_phase == 'in' else 1.0)
+            renderer = pico2d.open_canvas.__globals__['renderer']
+            pico2d.SDL_SetRenderDrawBlendMode(renderer, pico2d.SDL_BLENDMODE_BLEND)
+            pico2d.SDL_SetRenderDrawColor(renderer, 0, 0, 0, round(255 * opacity))
+            pico2d.SDL_RenderFillRect(renderer, None)
+            pico2d.SDL_SetRenderDrawBlendMode(renderer, pico2d.SDL_BLENDMODE_NONE)
 
 
 def main():
