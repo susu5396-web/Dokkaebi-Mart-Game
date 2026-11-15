@@ -148,7 +148,7 @@ class SceneTests(unittest.TestCase):
             self.assertEqual(game.scene, 'stage')
             width, height = ctypes.c_int(), ctypes.c_int()
             p.SDL_GetWindowSize(p.open_canvas.__globals__['window'], ctypes.byref(width), ctypes.byref(height))
-            self.assertEqual((width.value, height.value), (960, 720))
+            self.assertEqual((width.value, height.value), (1000, 720))
             remaining = game.market.state.remaining
             self.key(p.SDLK_w)
             self.assertFalse(game.market.keys)

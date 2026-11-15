@@ -88,7 +88,7 @@ class Game:
         canvas = pico2d.open_canvas.__globals__
         pico2d.SDL_SetHint(b'SDL_RENDER_SCALE_QUALITY', b'1')
         logical_w, logical_h = (SCREEN_W, SCREEN_H) if self.scene == 'stage' else (WIDTH, HEIGHT)
-        w, h = (960, 720) if self.scene == 'stage' else (WIDTH, HEIGHT)
+        w, h = (1000, 720) if self.scene == 'stage' else (WIDTH, HEIGHT)
         pico2d.SDL_SetWindowSize(canvas['window'], w, h)
         pico2d.SDL_RenderSetLogicalSize(canvas['renderer'], logical_w, logical_h)
         pico2d.SDL_SetWindowPosition(canvas['window'], pico2d.SDL_WINDOWPOS_CENTERED, pico2d.SDL_WINDOWPOS_CENTERED)

@@ -1,6 +1,6 @@
 """월드와 매대의 시각 표현. 입력과 수량 변경은 장면에서 처리한다."""
 from catalog import CATEGORIES, PRODUCTS
-from market_art import VIEW_W, VIEW_H, box, clip
+from market_art import VIEW_W, VIEW_H, SCREEN_W, SCREEN_H, box, clip
 from market_world import SHELVES, CHECKOUT, camera
 from market_hud import timer_color
 
@@ -25,7 +25,7 @@ def draw_world(art, actor, sprite):
     sprite.draw(actor, actor.x - cx, actor.y - cy)
     nearby = actor.nearby()
     if nearby:
-        box((210, VIEW_H - 66, 500, 42), (253, 245, 225))
+        box(((VIEW_W - 500) / 2, VIEW_H - 66, 500, 42), (253, 245, 225))
         art.text(f'E  {CATEGORIES[nearby[0]]} 매대 살펴보기', VIEW_W / 2, VIEW_H - 45, 23, center=True)
     clip()
     box((0, VIEW_H, VIEW_W, 70), (238, 230, 208))
@@ -38,7 +38,7 @@ def product_slots():
 
 
 def draw_shelf(art, state, category, section, message):
-    art.draw('environment/shelfview_background', (0, 0, 1280, 960), fit=False)
+    art.draw('environment/shelfview_background', (0, 0, SCREEN_W, SCREEN_H), fit=False)
     art.text(CATEGORIES[category] + ' 코너', 72, 148, 45)
     group = PRODUCTS[state.layout[category][section][0]].group
     art.text(f'현재 구간 {section + 1} / 8  ·  {group}', 75, 211, 23)
