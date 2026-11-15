@@ -2,6 +2,7 @@
 from catalog import CATEGORIES, PRODUCTS
 from market_art import VIEW_W, VIEW_H, box, clip
 from market_world import SHELVES, CHECKOUT, camera
+from market_hud import timer_color
 
 
 def draw_world(art, actor, sprite):
@@ -49,4 +50,4 @@ def draw_shelf(art, state, category, section, message):
         art.lines(product.name, x + w / 2, 710, 170, 19)
     art.text('상품을 클릭해서 담기  ·  E / Esc: 탑뷰로 돌아가기', 75, 824, 25)
     art.text(message or '탐색 중에도 시간은 흐릅니다.', 75, 881, 21, (148, 98, 35))
-    art.text(f'{int(state.remaining)} 초', 1160, 151, 25, center=True)
+    art.text(f'{int(state.remaining)} 초', 1160, 151, 25, color=timer_color(state.remaining), center=True)
