@@ -58,8 +58,8 @@ class MarketHUD:
             product = PRODUCTS[pid]
             cy = y + h * (.365 + index * .103)
             art.draw('icons/' + product.icon, (x + 26, cy - 13, 27, 27), trim=True)
-            art.lines(product.name, x + 119, cy, 122, 12)
-            art.text(f'{count}개', x + 203, cy, 13, center=True)
+            art.lines(product.name, x + 117, cy, 116, 12)
+            art.text(f'{count}개', x + 193, cy, 13, center=True)
         art.draw('ui/cart_inventory_panel', CART_RECT)
         for (sx, sy, sw, sh), pid in self.slots(state):
             product = PRODUCTS[pid]

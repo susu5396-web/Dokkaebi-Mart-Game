@@ -62,6 +62,8 @@ class Game:
         if self.pending_scene is None:
             return
         self.nickname_ui.focus(False)
+        if self.scene == 'stage' and self.pending_scene == 'lobby':
+            self.session.selected_stage = None
         self.scene = self.pending_scene
         self.pending_scene = None
         if self.scene == 'stage':

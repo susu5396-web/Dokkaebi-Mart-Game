@@ -17,7 +17,22 @@ class PlayerSprite:
                 for col in range(6):
                     left, right = round(col * sheet.width / 6), round((col + 1) * sheet.width / 6)
                     top, bottom = round(row * sheet.height / 9), round((row + 1) * sheet.height / 9)
-                    bounds = alpha.crop((left, top, right, bottom)).getbbox()
+                    cell = alpha.crop((left, top, right, bottom))
+                    # 시트의 행 경계에 걸친 이전 포즈의 작은 조각을 제외한다.
+                    runs, start = [], None
+                    for scan_y in range(cell.height + 1):
+                        occupied = scan_y < cell.height and cell.crop((0, scan_y, cell.width, scan_y + 1)).getbbox() is not None
+                        if occupied and start is None:
+                            start = scan_y
+                        elif not occupied and start is not None:
+                            runs.append((start, scan_y))
+                            start = None
+                    if runs:
+                        lo, hi = max(runs, key=lambda pair: pair[1] - pair[0])
+                        cropped = cell.crop((0, lo, cell.width, hi)).getbbox()
+                        bounds = (cropped[0], cropped[1] + lo, cropped[2], cropped[3] + lo)
+                    else:
+                        bounds = None
                     a, b, c, d = bounds or (0, 0, right - left, bottom - top)
                     self.frames[row, col] = (left + a, top + b, c - a, d - b)
 

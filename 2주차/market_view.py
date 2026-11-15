@@ -33,7 +33,7 @@ def draw_world(art, actor, sprite):
 
 
 def product_slots():
-    return [(112 + index * 289, 340, 220, 370) for index in range(4)]
+    return [(112 + index * 280, 340, 220, 400) for index in range(4)]
 
 
 def draw_shelf(art, state, category, section, message):
@@ -45,7 +45,7 @@ def draw_shelf(art, state, category, section, message):
     art.draw('environment/shelfview_shelf', (45, 304, 1190, 460), fit=False)
     for index, (x, y, w, h) in enumerate(product_slots()):
         product = PRODUCTS[state.layout[category][section][index]]
-        art.draw('icons/' + product.icon, (x + 8, y + 24, w - 16, 265), trim=True)
+        art.draw('icons/' + product.icon, (x + 8, y + 52, w - 16, 265), trim=True)
         art.lines(product.name, x + w / 2, 710, 170, 19)
     art.text('상품을 클릭해서 담기  ·  E / Esc: 탑뷰로 돌아가기', 75, 824, 25)
     art.text(message or '탐색 중에도 시간은 흐릅니다.', 75, 881, 21, (148, 98, 35))

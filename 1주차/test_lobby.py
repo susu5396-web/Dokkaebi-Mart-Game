@@ -116,7 +116,7 @@ class LobbyFlowTests(unittest.TestCase):
             self.assertEqual(self.game.scene, "stage")
             self.assertEqual(self.game.session.selected_stage, 1)
             self.game.draw()
-            self.game.handle_events([click(RETURN)])
+            self.game.handle_events([key(pico2d.SDLK_ESCAPE)])
             self.assertEqual(self.game.scene, "lobby")
             self.assertEqual(self.game.session.nickname, "은수")
             self.assertIsNone(self.game.session.selected_stage)

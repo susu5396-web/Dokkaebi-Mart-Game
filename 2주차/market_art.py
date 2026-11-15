@@ -37,7 +37,9 @@ class Art:
             self.images[name] = p.load_image(str(path))
             p.SDL_SetTextureScaleMode(self.images[name].texture, p.SDL_ScaleModeLinear)
             with Image.open(path) as im:
-                self.bounds[name] = im.getchannel('A').getbbox() if im.mode == 'RGBA' else (0, 0, im.width, im.height)
+                # 생성 PNG의 거의 투명한 외곽 점 때문에 매대 크기가 줄지 않게 한다.
+                self.bounds[name] = (im.getchannel('A').point(lambda alpha: 255 if alpha > 128 else 0).getbbox()
+                                     if im.mode == 'RGBA' else (0, 0, im.width, im.height))
         return self.images[name]
 
     def draw(self, name, rect, trim=False, fit=True):
