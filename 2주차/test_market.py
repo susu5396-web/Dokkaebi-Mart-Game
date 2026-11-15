@@ -40,11 +40,17 @@ class RulesTests(unittest.TestCase):
         normal.move(0, 1, .05)
         fast.move(0, 1, .05, True)
         self.assertGreater(fast.y, normal.y)
-        actor = Actor(x=250, y=500)
+        actor = Actor(x=150, y=500)
         for _ in range(40):
             actor.move(1, 0, .05, True)
         self.assertLessEqual(actor.x, SHELVES[0][0] - 43)
         self.assertTrue(can_stand(actor.x, actor.y))
+        self.assertEqual(actor.x, 100)
+
+    def test_timer_warning_boundary(self):
+        from market_hud import timer_color
+        self.assertEqual(timer_color(60), (40, 61, 83))
+        self.assertEqual(timer_color(59.9), (205, 45, 46))
 
 
 class SceneTests(unittest.TestCase):
@@ -73,6 +79,9 @@ class SceneTests(unittest.TestCase):
         game.request_scene('stage')
         game.apply_transition()
         market = game.market
+        self.assertEqual(len(market.sprite.frames), 54)
+        self.assertGreater(market.sprite.frames[0, 0][3], 150)
+        self.assertGreater(market.sprite.frames[2, 0][3], 140)
         game.update(.01)
         game.draw()
         p.update_canvas()
