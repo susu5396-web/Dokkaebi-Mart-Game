@@ -3,8 +3,15 @@ from catalog import CATEGORIES, PRODUCTS
 from market_art import box
 from market_world import SHELVES, WORLD_W, WORLD_H, contains
 
-LIST_RECT = (920, 345, 300, 375)
-CART_RECT = (930, 724, 280, 224)
+MAP_RECT = (872, 12, 396, 260)
+LIST_RECT = (872, 280, 396, 322)
+CART_RECT = (872, 610, 396, 338)
+
+
+def cart_cell(index):
+    x, y, w, h = CART_RECT
+    col, row = index % 3, index // 3
+    return x + 16 + col * 123, y + 94 + row * 108, 118, 102
 
 
 def timer_color(seconds):
@@ -18,12 +25,9 @@ class MarketHUD:
     def slots(self, state):
         ids = list(state.inventory)
         self.offset = max(0, min(self.offset, max(0, ((len(ids) - 1) // 3 - 1) * 3)))
-        x, y, w, h = CART_RECT
         result = []
         for index, pid in enumerate(ids[self.offset:self.offset + 6]):
-            col, row = index % 3, index // 3
-            result.append(((x + w * (.07 + col * .297), y + h * (.32 + row * .30),
-                            w * .275, h * .265), pid))
+            result.append((cart_cell(index), pid))
         return result
 
     def click(self, x, y, state):
@@ -40,38 +44,49 @@ class MarketHUD:
 
     def draw(self, art, state, actor):
         box((860, 0, 420, 960), (224, 232, 226))
-        art.text('도깨비 마트', 1070, 24, 25, center=True)
         art.draw('ui/timer_panel', (16, 16, 280, 94))
         art.text(f'{int(state.remaining)} 초', 182, 66, 30, color=timer_color(state.remaining), center=True)
         # 지도에는 매대 카테고리와 플레이어만 표시한다.
-        art.draw('ui/minimap_panel', (920, 40, 300, 300))
-        art.text('마트 지도', 1085, 83, 19, center=True)
-        mx, my, mw, mh = 945, 111, 250, 176
+        art.draw('ui/minimap_panel', MAP_RECT, trim=True, fit=False)
+        art.text('마트 지도', 1090, 47, 24, center=True)
+        mx, my, mw, mh = 890, 90, 358, 154
         for i, (sx, sy, sw, sh) in enumerate(SHELVES):
             rx, ry = mx + sx / WORLD_W * mw, my + sy / WORLD_H * mh
-            box((rx, ry, max(8, sw / WORLD_W * mw), sh / WORLD_H * mh), (155, 177, 152))
-            # 좁은 지도에서 이름을 세로로 쌓아 겹침을 피한다.
-            for j, char in enumerate(CATEGORIES[i]):
-                art.text(char, rx + 5, ry + 22 + j * 19, 16, center=True)
+            rw, rh = sw / WORLD_W * mw, sh / WORLD_H * mh
+            box((rx, ry, rw, rh), (126, 157, 141))
+            box((rx + 3, ry + 3, rw - 6, rh - 6), (188, 208, 183))
+            art.text(CATEGORIES[i], rx + rw / 2, 86, 17, center=True)
+            for divider in range(1, 4):
+                box((rx + 3, ry + rh * divider / 4, rw - 6, 2), (155, 180, 157))
         px, py = mx + actor.x / WORLD_W * mw, my + actor.y / WORLD_H * mh
+        box((px - 6, py - 6, 12, 12), (255, 255, 255))
         box((px - 4, py - 4, 8, 8), (30, 100, 221))
-        art.text('파랑: 플레이어', 1070, 318, 15, center=True)
-        art.draw('ui/shopping_list_panel', LIST_RECT)
+        art.text('파랑: 내 위치', 1178, 249, 15, center=True)
+        art.draw('ui/shopping_list_panel', LIST_RECT, trim=True, fit=False)
+        art.text('장보기 목록', 1090, 318, 25, center=True)
         x, y, w, h = LIST_RECT
         for index, (pid, count) in enumerate(state.required.items()):
             product = PRODUCTS[pid]
-            cy = y + h * (.365 + index * .103)
-            art.draw('icons/' + product.icon, (x + 32, cy - 17, 34, 34), trim=True)
-            art.lines(product.name, x + 152, cy, 152, 15)
-            art.text(f'{count}개', x + 255, cy, 16, center=True)
-        art.draw('ui/cart_inventory_panel', CART_RECT)
+            cy = y + 95 + index * 47
+            art.draw('icons/' + product.icon, (x + 20, cy - 21, 44, 42), trim=True)
+            art.lines(product.name, x + 208, cy, 238, 21)
+            art.text(f'{count}개', x + 357, cy, 21, center=True)
+            if index < len(state.required) - 1:
+                box((x + 20, cy + 24, w - 40, 1), (180, 205, 222))
+        art.draw('ui/cart_inventory_panel', CART_RECT, trim=True, fit=False)
+        art.text('카트 인벤토리', 1090, 648, 25, center=True)
+        art.text('상품 클릭: 1개 버리기', 1070, 685, 17, center=True)
+        for index in range(6):
+            sx, sy, sw, sh = cart_cell(index)
+            box((sx, sy, sw, sh), (159, 191, 215))
+            box((sx + 2, sy + 2, sw - 4, sh - 4), (253, 249, 237))
         for (sx, sy, sw, sh), pid in self.slots(state):
             product = PRODUCTS[pid]
-            art.draw('icons/' + product.icon, (sx + 17, sy + 2, sw - 34, 31), trim=True)
-            art.lines(product.name, sx + sw / 2, sy + sh - 13, sw - 7, 11)
-            box((sx + sw - 28, sy + 20, 25, 17), (66, 116, 185))
-            art.text(f'x{state.inventory[pid]}', sx + sw - 16, sy + 28, 11, (255, 255, 255), True)
+            art.draw('icons/' + product.icon, (sx + 22, sy + 5, 68, 58), trim=True)
+            art.lines(product.name, sx + sw / 2, sy + 80, sw - 12, 17)
+            box((sx + sw - 38, sy + 43, 34, 22), (66, 116, 185))
+            art.text(f'x{state.inventory[pid]}', sx + sw - 21, sy + 54, 16, (255, 255, 255), True)
         if not state.inventory:
-            art.text('카트가 비어 있습니다', 1070, 839, 14, center=True)
+            art.text('카트가 비어 있습니다', 1070, 932, 17, center=True)
         if len(state.inventory) > 6:
-            art.text('카트 위에서 휠: 다른 상품 보기', 1070, 952, 12, center=True)
+            art.text('마우스 휠: 다른 상품 보기', 1070, 932, 17, center=True)
