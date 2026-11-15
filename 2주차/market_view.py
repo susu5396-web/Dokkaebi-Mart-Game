@@ -1,5 +1,5 @@
 """월드와 매대의 시각 표현. 입력과 수량 변경은 장면에서 처리한다."""
-from catalog import CATEGORIES
+from catalog import CATEGORIES, PRODUCTS
 from market_art import VIEW_W, VIEW_H, box, clip
 from market_world import SHELVES, CHECKOUT, camera
 
@@ -30,3 +30,23 @@ def draw_world(art, actor, sprite):
     box((0, VIEW_H, VIEW_W, 70), (238, 230, 208))
     art.text('WASD / 방향키 이동   Shift 달리기   E 매대 보기', 24, VIEW_H + 23, 18)
     art.text('장보기 목록을 보고 상품을 찾아보세요.  Esc 로비로 돌아가기', 24, VIEW_H + 49, 16)
+
+
+def product_slots():
+    return [(112 + index * 289, 340, 220, 370) for index in range(4)]
+
+
+def draw_shelf(art, state, category, section, message):
+    art.draw('environment/shelfview_background', (0, 0, 1280, 960), fit=False)
+    art.text(CATEGORIES[category] + ' 코너', 72, 148, 45)
+    group = PRODUCTS[state.layout[category][section][0]].group
+    art.text(f'현재 구간 {section + 1} / 8  ·  {group}', 75, 211, 23)
+    art.text('W/S 또는 ↑/↓  한 번에 한 칸 이동', 75, 253, 21)
+    art.draw('environment/shelfview_shelf', (45, 304, 1190, 460), fit=False)
+    for index, (x, y, w, h) in enumerate(product_slots()):
+        product = PRODUCTS[state.layout[category][section][index]]
+        art.draw('icons/' + product.icon, (x + 8, y + 24, w - 16, 265), trim=True)
+        art.lines(product.name, x + w / 2, 710, 170, 19)
+    art.text('상품을 클릭해서 담기  ·  E / Esc: 탑뷰로 돌아가기', 75, 824, 25)
+    art.text(message or '탐색 중에도 시간은 흐릅니다.', 75, 881, 21, (148, 98, 35))
+    art.text(f'{int(state.remaining)} 초', 1160, 151, 25, center=True)
