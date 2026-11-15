@@ -72,8 +72,10 @@ class Game:
             else:
                 self.market.reset()
         canvas = pico2d.open_canvas.__globals__
-        w, h = (SCREEN_W, SCREEN_H) if self.scene == 'stage' else (WIDTH, HEIGHT)
+        logical_w, logical_h = (SCREEN_W, SCREEN_H) if self.scene == 'stage' else (WIDTH, HEIGHT)
+        w, h = (1120, 840) if self.scene == 'stage' else (WIDTH, HEIGHT)
         pico2d.SDL_SetWindowSize(canvas['window'], w, h)
+        pico2d.SDL_RenderSetLogicalSize(canvas['renderer'], logical_w, logical_h)
         pico2d.SDL_SetWindowPosition(canvas['window'], pico2d.SDL_WINDOWPOS_CENTERED, pico2d.SDL_WINDOWPOS_CENTERED)
         if self.scene == "nickname":
             self.nickname_ui.value = ""

@@ -76,7 +76,10 @@ class Market:
             import ctypes
             x, y = ctypes.c_int(), ctypes.c_int()
             p.SDL_GetMouseState(ctypes.byref(x), ctypes.byref(y))
-            self.hud.scroll(event.wheel.y, x.value, y.value, self.state)
+            from market_art import renderer
+            lx, ly = ctypes.c_float(), ctypes.c_float()
+            p.SDL_RenderWindowToLogical(renderer(), x.value, y.value, ctypes.byref(lx), ctypes.byref(ly))
+            self.hud.scroll(event.wheel.y, lx.value, ly.value, self.state)
         return None
 
     def update(self, dt):
