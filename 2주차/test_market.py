@@ -60,7 +60,7 @@ class SceneTests(unittest.TestCase):
         cls.p = p
         p.open_canvas(800, 600)
         from main import Game
-        cls.game = Game()
+        cls.game = Game(animate_transitions=False)
 
     @classmethod
     def tearDownClass(cls):
@@ -129,6 +129,41 @@ class SceneTests(unittest.TestCase):
         game.request_scene('stage')
         game.apply_transition()
         self.assertEqual(game.market.state.inventory, {})
+
+    def test_fade_resize_and_input_pause(self):
+        import ctypes
+        p, game = self.p, self.game
+        game.request_scene('lobby')
+        game.apply_transition()
+        game.animate_transitions = True
+        try:
+            game.request_scene('stage')
+            game.apply_transition()
+            self.assertEqual(game.scene, 'lobby')
+            game.update(.25)
+            self.assertEqual(game.fade_phase, 'switch')
+            game.draw()
+            p.update_canvas()
+            game.update(.01)
+            self.assertEqual(game.scene, 'stage')
+            width, height = ctypes.c_int(), ctypes.c_int()
+            p.SDL_GetWindowSize(p.open_canvas.__globals__['window'], ctypes.byref(width), ctypes.byref(height))
+            self.assertEqual((width.value, height.value), (960, 720))
+            remaining = game.market.state.remaining
+            self.key(p.SDLK_w)
+            self.assertFalse(game.market.keys)
+            game.update(.1)
+            game.draw()
+            p.update_canvas()
+            self.assertEqual(game.market.state.remaining, remaining)
+            game.update(.25)
+            self.assertIsNone(game.fade_phase)
+            game.update(.1)
+            self.assertLess(game.market.state.remaining, remaining)
+        finally:
+            game.animate_transitions = False
+            game.fade_phase = None
+            game.pending_scene = None
 
 
 if __name__ == '__main__':

@@ -44,7 +44,7 @@ class LobbyFlowTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         pico2d.open_canvas(WIDTH, HEIGHT)
-        cls.game = Game()
+        cls.game = Game(animate_transitions=False)
         collect_events()
 
     @classmethod
