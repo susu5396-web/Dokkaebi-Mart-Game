@@ -123,6 +123,13 @@ class SceneTests(unittest.TestCase):
         game.handle_events([event, event, event])
         pid = market.state.layout[0][1][0]
         self.assertEqual(market.state.inventory[pid], 3)
+        # 매대뷰에서도 오른쪽 카트 클릭은 담기가 아닌 1개 버리기다.
+        rect, _ = market.hud.slots(market.state)[0]
+        event.button.x, event.button.y = int(rect[0] + 5), int(rect[1] + 5)
+        game.handle_events([event])
+        self.assertEqual(market.state.inventory[pid], 2)
+        self.assertIsNotNone(market.shelf)
+        market.state.add(pid)
         before = market.state.remaining
         game.update(.25)
         self.assertLess(market.state.remaining, before)

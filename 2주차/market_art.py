@@ -78,32 +78,33 @@ class Art:
             return
         p.SDL_RenderCopy(renderer(), image.texture, ctypes.byref(src), ctypes.byref(dst))
 
-    def font(self, size):
-        if size not in self.fonts:
-            path = Path(os.environ.get('WINDIR', 'C:/Windows')) / 'Fonts' / 'malgun.ttf'
-            self.fonts[size] = p.load_font(str(path), size)
-        return self.fonts[size]
+    def font(self, size, bold=False):
+        key = size, bold
+        if key not in self.fonts:
+            path = Path(os.environ.get('WINDIR', 'C:/Windows')) / 'Fonts' / ('malgunbd.ttf' if bold else 'malgun.ttf')
+            self.fonts[key] = p.load_font(str(path), size)
+        return self.fonts[key]
 
-    def text(self, value, x, y, size=18, color=INK, center=False, max_width=None):
-        font = self.font(size)
+    def text(self, value, x, y, size=18, color=INK, center=False, max_width=None, bold=False):
+        font = self.font(size, bold)
         def width():
             w, h = ctypes.c_int(), ctypes.c_int()
             p.TTF_SizeUTF8(font.font, value.encode('utf-8'), ctypes.byref(w), ctypes.byref(h))
             return w.value
         while max_width and width() > max_width and size > 11:
             size -= 1
-            font = self.font(size)
+            font = self.font(size, bold)
         if center:
             x -= width() / 2
         # pico2d 글꼴 좌표는 기존 캔버스 높이를 기준으로 변환된다.
         font.draw(x, p.open_canvas.__globals__['canvas_height'] - y, value, color)
 
-    def lines(self, value, x, y, width, size=16, color=INK):
+    def lines(self, value, x, y, width, size=16, color=INK, bold=False):
         # 한국어 긴 상품명은 단어 경계 없이도 두 줄로 읽을 수 있게 한다.
         capacity = max(3, int(width / size))
         if len(value) <= capacity:
-            self.text(value, x, y, size, color, True, width)
+            self.text(value, x, y, size, color, True, width, bold)
         else:
             middle = min(capacity, (len(value) + 1) // 2)
-            self.text(value[:middle], x, y - size * .5, size, color, True, width)
-            self.text(value[middle:], x, y + size * .6, size, color, True, width)
+            self.text(value[:middle], x, y - size * .5, size, color, True, width, bold)
+            self.text(value[middle:], x, y + size * .6, size, color, True, width, bold)

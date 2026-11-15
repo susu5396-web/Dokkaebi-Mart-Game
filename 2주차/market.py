@@ -3,7 +3,7 @@ import pico2d as p
 from catalog import PRODUCTS
 from market_state import MarketState
 from market_world import Actor, contains
-from market_art import Art
+from market_art import Art, VIEW_W
 from market_player import PlayerSprite
 from market_hud import MarketHUD
 from market_view import draw_world, draw_shelf, product_slots
@@ -61,7 +61,9 @@ class Market:
                     self.shelf = category, target, side
         elif event.type == p.SDL_MOUSEBUTTONDOWN and event.button.button == p.SDL_BUTTON_LEFT:
             x, y = event.button.x, event.button.y
-            if self.shelf:
+            if x >= VIEW_W:
+                self.hud.click(x, y, self.state)
+            elif self.shelf:
                 category, section, _ = self.shelf
                 for index, rect in enumerate(product_slots()):
                     if contains(rect, x, y):
@@ -72,7 +74,7 @@ class Market:
                         break
             else:
                 self.hud.click(x, y, self.state)
-        elif event.type == p.SDL_MOUSEWHEEL and not self.shelf:
+        elif event.type == p.SDL_MOUSEWHEEL:
             import ctypes
             x, y = ctypes.c_int(), ctypes.c_int()
             p.SDL_GetMouseState(ctypes.byref(x), ctypes.byref(y))
@@ -98,4 +100,4 @@ class Market:
             draw_shelf(self.art, self.state, *self.shelf[:2], self.message)
         else:
             draw_world(self.art, self.actor, self.sprite)
-            self.hud.draw(self.art, self.state, self.actor)
+        self.hud.draw(self.art, self.state, self.actor)

@@ -2,7 +2,6 @@
 from catalog import CATEGORIES, PRODUCTS
 from market_art import VIEW_W, VIEW_H, SCREEN_W, SCREEN_H, box, clip
 from market_world import SHELVES, CHECKOUT, camera
-from market_hud import timer_color
 
 
 def draw_world(art, actor, sprite):
@@ -34,20 +33,23 @@ def draw_world(art, actor, sprite):
 
 
 def product_slots():
-    return [(112 + index * 280, 340, 220, 400) for index in range(4)]
+    spacing = (VIEW_W - 104) / 4
+    return [(52 + index * spacing, 300, spacing - 8, 390) for index in range(4)]
 
 
 def draw_shelf(art, state, category, section, message):
-    art.draw('environment/shelfview_background', (0, 0, SCREEN_W, SCREEN_H), fit=False)
-    art.text(CATEGORIES[category] + ' 코너', 72, 148, 45)
-    group = PRODUCTS[state.layout[category][section][0]].group
-    art.text(f'현재 구간 {section + 1} / 8  ·  {group}', 75, 211, 23)
-    art.text('W/S 또는 ↑/↓  한 번에 한 칸 이동', 75, 253, 21)
-    art.draw('environment/shelfview_shelf', (45, 304, 1190, 460), fit=False)
+    clip((0, 0, VIEW_W, VIEW_H))
+    art.draw('environment/shelfview_background', (0, 0, VIEW_W, VIEW_H), fit=False)
+    art.draw('environment/shelfview_shelf', (20, 268, VIEW_W - 40, 455), fit=False)
     for index, (x, y, w, h) in enumerate(product_slots()):
         product = PRODUCTS[state.layout[category][section][index]]
-        art.draw('icons/' + product.icon, (x + 8, y + 52, w - 16, 265), trim=True)
-        art.lines(product.name, x + w / 2, 710, 170, 19)
-    art.text('상품을 클릭해서 담기  ·  E / Esc: 탑뷰로 돌아가기', 75, 824, 25)
-    art.text(message or '탐색 중에도 시간은 흐릅니다.', 75, 881, 21, (148, 98, 35))
-    art.text(f'{int(state.remaining)} 초', 1160, 151, 25, color=timer_color(state.remaining), center=True)
+        art.draw('icons/' + product.icon, (x + 12, y + 24, w - 24, 270), trim=True)
+        box((x, 622, w, 72), (174, 133, 83))
+        box((x + 3, 625, w - 6, 66), (255, 248, 228))
+        art.lines(product.name, x + w / 2, 656, w - 16, 27, bold=True)
+    if message:
+        art.text(message, VIEW_W / 2, 805, 22, (148, 98, 35), True, VIEW_W - 80)
+    clip()
+    box((0, VIEW_H, VIEW_W, 70), (238, 230, 208))
+    art.text('W/S 또는 ↑/↓  한 번에 한 칸 이동', 24, VIEW_H + 23, 20)
+    art.text('상품 클릭: 담기   E / Esc: 탑뷰로 돌아가기', 24, VIEW_H + 49, 20)
