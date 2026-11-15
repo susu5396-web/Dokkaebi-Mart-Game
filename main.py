@@ -7,6 +7,7 @@ from pathlib import Path
 import pico2d
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "1주차"))
+sys.path.insert(0, str(Path(__file__).resolve().parent / "2주차"))
 
 from settings import (
     WIDTH, HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_X, BUTTON_Y,
@@ -15,6 +16,8 @@ from settings import (
 from session import Session
 from ui import NicknameUI, inside, load_ui_image, FIELD, CONFIRM, BACK
 from lobby import LobbyUI
+from market import Market
+from market_art import SCREEN_W, SCREEN_H
 
 
 def collect_events():
@@ -40,6 +43,7 @@ class Game:
         self.running = True
         self.scale = 1.0
         self.mouse = (-1, -1)
+        self.market = None
         pico2d.SDL_StopTextInput()
 
     def request_scene(self, scene):
@@ -60,6 +64,15 @@ class Game:
         self.nickname_ui.focus(False)
         self.scene = self.pending_scene
         self.pending_scene = None
+        if self.scene == 'stage':
+            if self.market is None:
+                self.market = Market()
+            else:
+                self.market.reset()
+        canvas = pico2d.open_canvas.__globals__
+        w, h = (SCREEN_W, SCREEN_H) if self.scene == 'stage' else (WIDTH, HEIGHT)
+        pico2d.SDL_SetWindowSize(canvas['window'], w, h)
+        pico2d.SDL_SetWindowPosition(canvas['window'], pico2d.SDL_WINDOWPOS_CENTERED, pico2d.SDL_WINDOWPOS_CENTERED)
         if self.scene == "nickname":
             self.nickname_ui.value = ""
             self.nickname_ui.saved_name = ""
@@ -75,12 +88,15 @@ class Game:
     def handle_events(self, events):
         # 화면 전환보다 종료를 우선하고, 전환 프레임의 잔여 입력은 소비한다.
         if any(e.type == pico2d.SDL_QUIT or (
-            e.type == pico2d.SDL_KEYDOWN and e.key.keysym.sym == pico2d.SDLK_ESCAPE
+            self.scene != 'stage' and e.type == pico2d.SDL_KEYDOWN and e.key.keysym.sym == pico2d.SDLK_ESCAPE
         ) for e in events):
             self.running = False
             return
         for event in events:
             if self.pending_scene is not None or not self.running:
+                continue
+            if self.scene == 'stage':
+                self.request_scene(self.market.handle(event))
                 continue
             if event.type == pico2d.SDL_KEYDOWN:
                 if event.key.repeat:
@@ -122,6 +138,9 @@ class Game:
             self.apply_transition()
 
     def update(self, dt):
+        if self.scene == 'stage':
+            self.market.update(dt)
+            return
         mouse_x, mouse_y = ctypes.c_int(), ctypes.c_int()
         pico2d.SDL_GetMouseState(ctypes.byref(mouse_x), ctypes.byref(mouse_y))
         if pico2d.SDL_GetMouseFocus():
@@ -144,6 +163,8 @@ class Game:
             self.nickname_ui.draw(*self.mouse)
         elif self.scene == "lobby":
             self.lobby.draw(self.mouse)
+        elif self.scene == 'stage':
+            self.market.draw()
         else:
             self.lobby.draw_preview(self.mouse, self.scene == "ending")
 
