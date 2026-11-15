@@ -10,6 +10,22 @@ from market_world import Actor, SHELVES, SECTION_HEIGHT, can_stand
 
 
 class RulesTests(unittest.TestCase):
+    def test_stage_one_shopping_requirements(self):
+        totals = set()
+        for seed in range(200):
+            state = MarketState(seed)
+            with self.subTest(seed=seed):
+                self.assertEqual(len(state.required), 5)
+                self.assertEqual({PRODUCTS[pid].category for pid in state.required}, set(range(5)))
+                self.assertTrue(all(count in (1, 2) for count in state.required.values()))
+                total = sum(state.required.values())
+                self.assertIn(total, (7, 8))
+                totals.add(total)
+                available = {pid for category in state.layout for section in category for pid in section}
+                self.assertTrue(set(state.required) <= available)
+                self.assertEqual(state.required, MarketState(seed).required)
+        self.assertEqual(totals, {7, 8})
+
     def test_layout_and_groups(self):
         state = MarketState(12)
         flattened = [pid for category in state.layout for section in category for pid in section]

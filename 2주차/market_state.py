@@ -15,8 +15,12 @@ class MarketState:
                 rng.shuffle(ids)
                 ordered.extend(ids)
             self.layout.append([ordered[i:i + 4] for i in range(0, 32, 4)])
-        self.required = {pid: rng.randint(1, 3)
-                         for pid in rng.sample(list(PRODUCTS), 5)}
+        # 스테이지 1: 카테고리마다 1종, 합계 7~8개, 상품별 최대 2개.
+        selected = [rng.choice([pid for section in category for pid in section])
+                    for category in self.layout]
+        self.required = dict.fromkeys(selected, 1)
+        for pid in rng.sample(selected, rng.randint(7, 8) - len(selected)):
+            self.required[pid] += 1
         self.inventory = {}
         self.remaining = 240.0
 
