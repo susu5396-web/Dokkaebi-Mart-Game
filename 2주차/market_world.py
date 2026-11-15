@@ -1,12 +1,13 @@
 """긴 매대 다섯 개와 넓은 통로. 모든 좌표는 좌상단 원점이다."""
 from dataclasses import dataclass
 
-WORLD_W, WORLD_H = 2640, 2320
-SHELF_TOP, SHELF_HEIGHT, SHELF_WIDTH = 260, 1680, 200
+WORLD_W, WORLD_H = 2200, 2240
+SHELF_TOP, SHELF_HEIGHT, SHELF_WIDTH = 200, 1680, 200
 SECTION_HEIGHT = SHELF_HEIGHT / 8
-SHELVES = tuple((300 + i * 470, SHELF_TOP, SHELF_WIDTH, SHELF_HEIGHT)
+SHELVES = tuple((200 + i * 400, SHELF_TOP, SHELF_WIDTH, SHELF_HEIGHT)
                 for i in range(5))
-CHECKOUT = (65, 2070, 240, 130)
+CHECKOUT = (65, 2040, 240, 130)
+AISLE_CENTERS = tuple(100 + i * 400 for i in range(6))
 
 
 def contains(rect, x, y):
@@ -24,8 +25,8 @@ def can_stand(x, y, radius=43):
 
 @dataclass
 class Actor:
-    x: float = 190
-    y: float = 1995
+    x: float = 100
+    y: float = 1950
     direction: str = 'up'
     moving: bool = False
     running: bool = False
@@ -42,6 +43,14 @@ class Actor:
         distance = (340 if running else 190) * min(dt, 0.05)
         nx, ny = self.x + dx / length * distance, self.y + dy / length * distance
         old = self.x, self.y
+        in_aisle = SHELF_TOP - 43 < self.y < SHELF_TOP + SHELF_HEIGHT + 43
+        entering = SHELF_TOP - 43 < ny < SHELF_TOP + SHELF_HEIGHT + 43
+        if in_aisle or entering:
+            center = min(AISLE_CENTERS, key=lambda value: abs(value - self.x))
+            if abs(center - self.x) <= 60:
+                nx = center
+            elif entering:
+                ny = self.y
         if can_stand(nx, self.y):
             self.x = nx
         if can_stand(self.x, ny):
@@ -66,7 +75,7 @@ class Actor:
 
     def align(self, category, section, side):
         x, _, w, _ = SHELVES[category]
-        nx = x - 65 if side < 0 else x + w + 65
+        nx = x - 100 if side < 0 else x + w + 100
         ny = SHELF_TOP + (section + 0.5) * SECTION_HEIGHT
         if not can_stand(nx, ny):
             return False

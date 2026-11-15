@@ -7,7 +7,7 @@ from market_world import SHELVES, CHECKOUT, camera
 def draw_world(art, actor, sprite):
     cx, cy = camera(actor, VIEW_W, VIEW_H)
     clip((0, 0, VIEW_W, VIEW_H))
-    tile = 320
+    tile = 400
     for y in range(int(cy // tile) * tile, int(cy + VIEW_H) + tile, tile):
         for x in range(int(cx // tile) * tile, int(cx + VIEW_W) + tile, tile):
             art.draw('environment/topview_floor', (x - cx, y - cy, tile, tile))
