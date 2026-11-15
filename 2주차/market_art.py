@@ -7,8 +7,8 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parent
 ASSETS = ROOT / 'assets'
-SCREEN_W, SCREEN_H = 1333, 960
-VIEW_W, VIEW_H = 913, 890
+SCREEN_W, SCREEN_H = 1467, 960
+VIEW_W, VIEW_H = 1047, 890
 INK = (40, 61, 83)
 
 

@@ -118,7 +118,8 @@ class SceneTests(unittest.TestCase):
         self.assertEqual(market.state.inventory[pid], 2)
         for product in list(PRODUCTS)[:10]:
             market.state.add(product)
-        market.hud.scroll(-1, 1000, 800, market.state)
+        from market_hud import CART_RECT
+        market.hud.scroll(-1, CART_RECT[0] + 20, CART_RECT[1] + 20, market.state)
         self.assertEqual(market.hud.offset, 3)
         game.draw()
         p.update_canvas()
@@ -148,7 +149,7 @@ class SceneTests(unittest.TestCase):
             self.assertEqual(game.scene, 'stage')
             width, height = ctypes.c_int(), ctypes.c_int()
             p.SDL_GetWindowSize(p.open_canvas.__globals__['window'], ctypes.byref(width), ctypes.byref(height))
-            self.assertEqual((width.value, height.value), (1000, 720))
+            self.assertEqual((width.value, height.value), (1100, 720))
             remaining = game.market.state.remaining
             self.key(p.SDLK_w)
             self.assertFalse(game.market.keys)
