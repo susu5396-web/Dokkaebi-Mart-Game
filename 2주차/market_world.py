@@ -40,7 +40,7 @@ class Actor:
             self.animation = 0
             return
         self.direction = ('right' if dx > 0 else 'left') if abs(dx) > abs(dy) else ('down' if dy > 0 else 'up')
-        distance = (340 if running else 190) * min(dt, 0.05)
+        distance = (400 if running else 250) * min(dt, 0.05)
         nx, ny = self.x + dx / length * distance, self.y + dy / length * distance
         old = self.x, self.y
         in_aisle = SHELF_TOP - 43 < self.y < SHELF_TOP + SHELF_HEIGHT + 43

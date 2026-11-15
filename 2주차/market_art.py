@@ -30,6 +30,7 @@ def clip(rect=None):
 class Art:
     def __init__(self):
         self.images, self.bounds, self.fonts = {}, {}, {}
+        self.sources, self.thumbnails = {}, {}
 
     def image(self, name):
         if name not in self.images:
@@ -37,6 +38,8 @@ class Art:
             self.images[name] = p.load_image(str(path))
             p.SDL_SetTextureScaleMode(self.images[name].texture, p.SDL_ScaleModeLinear)
             with Image.open(path) as im:
+                if name.startswith(('icons/', 'ui/')):
+                    self.sources[name] = im.convert('RGBA')
                 # 생성 PNG의 거의 투명한 외곽 점 때문에 매대 크기가 줄지 않게 한다.
                 self.bounds[name] = (im.getchannel('A').point(lambda alpha: 255 if alpha > 128 else 0).getbbox()
                                      if im.mode == 'RGBA' else (0, 0, im.width, im.height))
@@ -53,6 +56,26 @@ class Art:
             x, y, w, h = x + (w - nw) / 2, y + (h - nh) / 2, nw, nh
         src = p.SDL_Rect(a, b, c - a, d - b)
         dst = p.SDL_Rect(*map(int, (x, y, w, h)))
+        if name in self.sources:
+            # GPU의 한 번짜리 선형 축소 대신 실제 화면 해상도로 필터링한다.
+            sx, sy = ctypes.c_float(), ctypes.c_float()
+            p.SDL_RenderGetScale(renderer(), ctypes.byref(sx), ctypes.byref(sy))
+            size = (max(1, round(w * sx.value)), max(1, round(h * sy.value)))
+            key = name, bounds, size
+            if key not in self.thumbnails:
+                source = self.sources[name].crop(bounds)
+                # 알파를 미리 곱해 투명 가장자리에 검은 테두리가 생기지 않게 한다.
+                thumb = source.convert('RGBa').resize(size, Image.Resampling.LANCZOS).convert('RGBA')
+                pixels = ctypes.create_string_buffer(thumb.tobytes())
+                surface = p.SDL_CreateRGBSurfaceFrom(pixels, *size, 32, size[0] * 4,
+                                                     0xFF, 0xFF00, 0xFF0000, 0xFF000000)
+                texture = p.SDL_CreateTextureFromSurface(renderer(), surface)
+                p.SDL_FreeSurface(surface)
+                p.SDL_SetTextureBlendMode(texture, p.SDL_BLENDMODE_BLEND)
+                p.SDL_SetTextureScaleMode(texture, p.SDL_ScaleModeLinear)
+                self.thumbnails[key] = p.Image(texture)
+            p.SDL_RenderCopy(renderer(), self.thumbnails[key].texture, None, ctypes.byref(dst))
+            return
         p.SDL_RenderCopy(renderer(), image.texture, ctypes.byref(src), ctypes.byref(dst))
 
     def font(self, size):
