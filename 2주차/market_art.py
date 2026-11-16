@@ -81,7 +81,7 @@ class Art:
     def font(self, size, bold=False):
         key = size, bold
         if key not in self.fonts:
-            path = Path(os.environ.get('WINDIR', 'C:/Windows')) / 'Fonts' / ('malgunbd.ttf' if bold else 'malgun.ttf')
+            path = ROOT.parent / 'assets/fonts/Jua-Regular.ttf'
             self.fonts[key] = p.load_font(str(path), size)
         return self.fonts[key]
 

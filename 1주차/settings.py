@@ -8,14 +8,15 @@ BUTTON_X = WIDTH - BUTTON_MARGIN - BUTTON_WIDTH / 2
 BUTTON_Y = BUTTON_MARGIN + BUTTON_HEIGHT / 2
 HOVER_SCALE = 1.08
 ASSET_DIR = Path(__file__).resolve().parent
+FONT_PATH = ASSET_DIR.parent / 'assets' / 'fonts' / 'Jua-Regular.ttf'
 START_ASSET_DIR = ASSET_DIR / "start assets"
 LOBBY_ASSET_DIR = ASSET_DIR / "lobby assets" / "images" / "lobby"
 DEVELOPMENT_MODE = False
 
-# 로비·미리보기 색상. 흰 외곽선이 있는 에셋과 구분되는 연한 네이비 계열.
-LOBBY_BACKGROUND = (207, 220, 237)
-LOBBY_PANEL = (192, 208, 230)
-LOBBY_STAGE = (167, 190, 220)
-LOBBY_LOCKED = (184, 198, 217)
-LOBBY_ACCOUNT = (224, 234, 248)
+# 로비·미리보기 색상. 닉네임과 장보기 UI에 맞춘 크림색·파스텔 파랑.
+LOBBY_BACKGROUND = (239, 242, 225)
+LOBBY_PANEL = (255, 248, 230)
+LOBBY_STAGE = (224, 239, 248)
+LOBBY_LOCKED = (235, 237, 225)
+LOBBY_ACCOUNT = (255, 248, 230)
 LOBBY_MUTED = (67, 87, 117)

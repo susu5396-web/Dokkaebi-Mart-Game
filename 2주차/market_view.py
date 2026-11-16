@@ -20,7 +20,7 @@ def draw_world(art, actor, sprite):
             art.text(CATEGORIES[category], x + w / 2 - cx, label_y - cy, 24, center=True)
     x, y, w, h = CHECKOUT
     art.draw('environment/checkout', (x - cx, y - cy, w, h), trim=True)
-    art.text('계산대 · 출발 지점', x + w / 2 - cx, y + h + 24 - cy, 18, center=True)
+    art.text('계산대 / 출발 지점', x + w / 2 - cx, y + h + 24 - cy, 18, center=True)
     sprite.draw(actor, actor.x - cx, actor.y - cy)
     nearby = actor.nearby()
     if nearby:
@@ -51,5 +51,5 @@ def draw_shelf(art, state, category, section, message):
         art.text(message, VIEW_W / 2, 805, 22, (148, 98, 35), True, VIEW_W - 80)
     clip()
     box((0, VIEW_H, VIEW_W, 70), (238, 230, 208))
-    art.text('W/S 또는 ↑/↓  한 번에 한 칸 이동', 24, VIEW_H + 23, 20)
+    art.text('W/S 또는 위/아래 방향키: 한 번에 한 칸 이동', 24, VIEW_H + 23, 20)
     art.text('상품 클릭: 담기   E / Esc: 탑뷰로 돌아가기', 24, VIEW_H + 49, 20)

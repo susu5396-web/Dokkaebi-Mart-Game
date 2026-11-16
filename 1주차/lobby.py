@@ -7,7 +7,7 @@ import pico2d
 
 from settings import (
     WIDTH, HEIGHT, LOBBY_ASSET_DIR, LOBBY_BACKGROUND, LOBBY_PANEL,
-    LOBBY_STAGE, LOBBY_LOCKED, LOBBY_ACCOUNT, LOBBY_MUTED,
+    LOBBY_STAGE, LOBBY_LOCKED, LOBBY_ACCOUNT, LOBBY_MUTED, FONT_PATH,
 )
 from ui import NAVY, BLUE, inside, rounded_box, text_width, load_ui_image
 
@@ -34,7 +34,7 @@ class LobbyUI:
             self.images[name] = load_ui_image(LOBBY_ASSET_DIR / (name + ".png"))
         fonts = Path(os.environ.get("WINDIR", "C:/Windows")) / "Fonts"
         self.fonts = {
-            size: pico2d.load_font(str(fonts / ("malgunbd.ttf" if size >= 18 else "malgun.ttf")), size)
+            size: pico2d.load_font(str(FONT_PATH), size)
             for size in (12, 13, 14, 15, 16, 18, 20, 22, 24, 28)
         }
 
@@ -193,7 +193,7 @@ class LobbyUI:
         self.art("panel_flat", (105, 105, 590, 415), stretch=True)
         self.art("market_banner", (135, 336, 530, 116))
         if ending:
-            self.text("엔딩 미리보기 · 개발 전용", 400, 490, 16, BLUE, center=True)
+            self.text("엔딩 미리보기 / 개발 전용", 400, 490, 16, BLUE, center=True)
             self.text("도깨비 마트 인수 완료!", 400, 300, 28, center=True)
             self.text("모두가 모은 장보기 보수로 마트를 인수했습니다.", 400, 257, 18, center=True)
             self.text("이제 우리의 마트에서 새로운 이야기가 시작됩니다.", 400, 229, 18, center=True)

@@ -34,7 +34,7 @@ class Game:
     def __init__(self, development_mode=DEVELOPMENT_MODE, animate_transitions=True):
         self.background = load_ui_image(START_ASSET_DIR / "start.png")
         self.start_button = load_ui_image(START_ASSET_DIR / "start_button.png")
-        self.name_background = load_ui_image(ASSET_DIR / "name_background.png")
+        self.name_background = load_ui_image(Path(__file__).resolve().parent / '2주차/assets/ui/nickname_background.png')
         self.session = Session()
         self.nickname_ui = NicknameUI()
         self.lobby = LobbyUI(self.session, development_mode)
