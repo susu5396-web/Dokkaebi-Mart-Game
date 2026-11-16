@@ -47,6 +47,21 @@ class DokkaebiTests(unittest.TestCase):
             enemy.update(.05, target)
             self.assertFalse(enemy.moving)
 
+    def test_two_enemies_do_not_overlap_and_wait_for_blocked_spawn(self):
+        from market_dokkaebi import ENEMY_RADIUS, RESPAWN_DELAY
+        enemies = spawn_dokkaebi(2)
+        target = Actor(x=2100, y=1000)
+        for _ in range(150):
+            for enemy in enemies:
+                enemy.update(.05, target, enemies)
+            self.assertGreaterEqual(hypot(enemies[0].x - enemies[1].x, enemies[0].y - enemies[1].y), 2 * ENEMY_RADIUS - 1e-6)
+        enemy = enemies[0]
+        enemy.banish()
+        target.x, target.y = 2100, 100
+        enemy.update(RESPAWN_DELAY, target, enemies)
+        self.assertEqual(enemy.phase, 'active')
+        self.assertGreaterEqual(hypot(enemy.x - target.x, enemy.y - target.y), FOLLOW_DISTANCE)
+
     def test_new_round_respawns_at_den(self):
         enemies = spawn_dokkaebi(2)
         enemies[0].x = 500
