@@ -42,7 +42,7 @@ class MarketHUD:
             self.offset = max(0, self.offset - amount * 3)
             self.slots(state)
 
-    def draw(self, art, state, actor):
+    def draw(self, art, state, actor, dokkaebi=()):
         box((VIEW_W, 0, 420, SCREEN_H), (224, 232, 226))
         art.draw('ui/timer_panel', (16, 16, 364, 122))
         art.text(f'{int(state.remaining)} 초', 232, 81, 39, color=timer_color(state.remaining), center=True)
@@ -64,7 +64,15 @@ class MarketHUD:
         px, py = mx + actor.x / WORLD_W * mw, my + actor.y / WORLD_H * mh
         box((px - 7.5, py - 7.5, 15, 15), (255, 255, 255))
         box((px - 5, py - 5, 10, 10), (30, 100, 221))
-        art.text('파랑: 내 위치', VIEW_W + 318, 249, 19, center=True)
+        for enemy in dokkaebi:
+            if enemy.phase != 'active':
+                continue
+            gx, gy = mx + enemy.x / WORLD_W * mw, my + enemy.y / WORLD_H * mh
+            color = (210, 54, 45) if enemy.stolen_pid is not None else (126, 67, 170)
+            box((gx - 7, gy - 7, 14, 14), (255, 255, 255))
+            box((gx - 5, gy - 5, 10, 10), color)
+        art.text('파랑: 플레이어   보라: 도깨비   빨강: 도주 중',
+                 VIEW_W + 210, 249, 18, center=True)
         art.draw('ui/shopping_list_panel', LIST_RECT, trim=True, fit=False)
         art.text('장보기 목록', VIEW_W + 230, 318, 31, center=True)
         x, y, w, h = LIST_RECT

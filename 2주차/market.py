@@ -216,5 +216,5 @@ class Market:
             draw_shelf(self.art, self.state, *self.shelf[:2], self.message)
         else:
             draw_world(self.art, self.actor, self.sprite, self.dokkaebi, self.dokkaebi_sprite, self.message)
-        self.hud.draw(self.art, self.state, self.actor)
+        self.hud.draw(self.art, self.state, self.actor, self.dokkaebi)
         draw_result(self.art, self)
