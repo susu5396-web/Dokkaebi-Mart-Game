@@ -2,7 +2,7 @@
 from dataclasses import dataclass, field
 from functools import lru_cache
 from heapq import heappop, heappush
-from math import hypot, cos, sin, tau
+from math import hypot, cos, sin, atan2, tau
 
 from market_world import SHELVES, CHECKOUT, can_stand, DOKKAEBI_DEN, DOKKAEBI_SPEED
 
@@ -151,9 +151,39 @@ class Dokkaebi:
                     best, best_length = candidate, length
         return best
 
+    def flee_route(self, target, blockers):
+        start = self.x, self.y
+        dx, dy = self.x - target.x, self.y - target.y
+        if hypot(dx, dy) < 1e-6:
+            dx, dy = {'right': (1, 0), 'left': (-1, 0), 'down': (0, 1), 'up': (0, -1)}[self.direction]
+        length = hypot(dx, dy)
+        away = dx / length, dy / length
+        angle = atan2(away[1], away[0])
+        best, best_score = [], float('-inf')
+        for distance in (360, 540, 720):
+            for offset in (0, -tau / 12, tau / 12, -tau / 6, tau / 6, -tau / 4, tau / 4):
+                goal = (self.x + cos(angle + offset) * distance,
+                        self.y + sin(angle + offset) * distance)
+                if not can_stand(*goal, RADIUS):
+                    continue
+                candidate = route(start, goal)
+                previous, path_length = start, 0
+                for point in candidate:
+                    if not movement_clear(previous, point, blockers, ENEMY_RADIUS):
+                        break
+                    path_length += hypot(point[0] - previous[0], point[1] - previous[1])
+                    previous = point
+                else:
+                    progress = (goal[0] - self.x) * away[0] + (goal[1] - self.y) * away[1]
+                    score = progress - path_length * .12
+                    if candidate and score > best_score:
+                        best, best_score = candidate, score
+        return best
+
     def update(self, dt, target, others=()):
         elapsed = max(0, dt)
-        if self.phase == 'active' and self.stolen_pid is not None:
+        fleeing = self.phase == 'active' and self.stolen_pid is not None
+        if fleeing:
             self.escape_in = max(0, self.escape_in - elapsed)
             if self.escape_in <= 1e-6:
                 self.banish()
@@ -177,12 +207,17 @@ class Dokkaebi:
         self.moving = False
         start, goal = (self.x, self.y), (target.x, target.y)
         direct = clear_path(start, goal)
-        if direct and hypot(self.x - target.x, self.y - target.y) <= FOLLOW_DISTANCE + 1e-6:
+        if not fleeing and direct and hypot(self.x - target.x, self.y - target.y) <= FOLLOW_DISTANCE + 1e-6:
             self.path.clear()
             self.repath_in = 0
             return
         self.repath_in -= dt
-        if direct:
+        if fleeing:
+            if self.repath_in <= 0 or not self.path:
+                blockers = [(target, PLAYER_RADIUS)] + [(other, ENEMY_RADIUS) for other in others if other is not self]
+                self.path = self.flee_route(target, blockers)
+                self.repath_in = REPATH_INTERVAL
+        elif direct:
             self.path = [goal]
         elif self.repath_in <= 0 or not self.path:
             self.path = route(start, goal)
@@ -196,7 +231,7 @@ class Dokkaebi:
                 self.path.pop(0)
                 continue
             step = min(distance, budget)
-            if direct and len(self.path) == 1:
+            if not fleeing and direct and len(self.path) == 1:
                 step = min(step, max(0, distance - FOLLOW_DISTANCE))
             if step <= 1e-6:
                 break
@@ -207,7 +242,7 @@ class Dokkaebi:
                 break
             blockers = [(target, PLAYER_RADIUS)] + [(other, ENEMY_RADIUS) for other in others if other is not self]
             if not movement_clear((self.x, self.y), (nx, ny), blockers, ENEMY_RADIUS):
-                self.path = self.approach_route(target, blockers)
+                self.path = self.flee_route(target, blockers) if fleeing else self.approach_route(target, blockers)
                 self.repath_in = REPATH_INTERVAL
                 break
             self.x, self.y = nx, ny

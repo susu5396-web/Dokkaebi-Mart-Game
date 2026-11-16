@@ -206,6 +206,8 @@ class Market:
                     self.state.discard(pid)
                     enemy.stolen_pid = pid
                     enemy.escape_in = ESCAPE_DELAY
+                    enemy.path.clear()
+                    enemy.repath_in = 0
                     self.message = PRODUCTS[pid].name + ' 1개 도난! 5초 안에 R로 되찾으세요.'
                     self.message_time = 3
 

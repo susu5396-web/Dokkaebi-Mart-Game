@@ -47,6 +47,13 @@ class DokkaebiTests(unittest.TestCase):
             enemy.update(.05, target)
             self.assertFalse(enemy.moving)
 
+    def test_stolen_dokkaebi_flees_away_from_player(self):
+        enemy = Dokkaebi(500, 1950, stolen_pid='milk', escape_in=5)
+        target = Actor(x=350, y=1950)
+        for _ in range(10):
+            enemy.update(.05, target)
+        self.assertGreater(enemy.x, 500)
+
     def test_two_enemies_do_not_overlap_and_wait_for_blocked_spawn(self):
         from market_dokkaebi import ENEMY_RADIUS, RESPAWN_DELAY
         enemies = spawn_dokkaebi(2)
