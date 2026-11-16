@@ -7,6 +7,8 @@ from market_art import Art, VIEW_W
 from market_player import PlayerSprite
 from market_hud import MarketHUD
 from market_view import draw_world, draw_shelf, product_slots
+from market_result import draw_result, RESULT_BUTTON
+from session import Session
 
 UP = (p.SDLK_w, p.SDLK_UP)
 DOWN = (p.SDLK_s, p.SDLK_DOWN)
@@ -15,7 +17,8 @@ RIGHT = (p.SDLK_d, p.SDLK_RIGHT)
 
 
 class Market:
-    def __init__(self):
+    def __init__(self, session=None):
+        self.session = session if session is not None else Session()
         self.art, self.sprite = Art(), PlayerSprite()
         self.reset()
 
@@ -24,6 +27,11 @@ class Market:
         self.keys = set()
         self.shelf = None
         self.message, self.message_time = '', 0
+        self.stage = self.session.selected_stage or 1
+        self.reward = 0
+        self.checkout_inside = False
+        self.differences = []
+        self.inspection_time = 0
 
     def preload(self):
         # 원본 PNG와 축소 텍스처를 첫 게임 입장 전에 캐시에 준비한다.
@@ -34,7 +42,29 @@ class Market:
             for w, h in ((55, 53), (85, 73), (width - 24, 270)):
                 self.art.draw('icons/' + icon, (0, 0, w, h), trim=True)
 
+    def inspect_cart(self):
+        if self.shelf or not self.actor.at_checkout() or self.state.outcome is not None:
+            return
+        self.differences = self.state.checkout()
+        self.inspection_time = 6 if self.differences else 0
+        if self.state.outcome == 'success':
+            self.reward = self.session.complete_stage(self.stage)
+            self.keys.clear()
+            self.actor.moving = False
+
+    def result_destination(self):
+        return 'ending' if self.state.outcome == 'success' and self.session.acquired else 'lobby'
+
     def handle(self, event):
+        if self.state.outcome is not None:
+            if event.type == p.SDL_KEYDOWN and not event.key.repeat and event.key.keysym.sym in (
+                    p.SDLK_RETURN, p.SDLK_KP_ENTER, p.SDLK_ESCAPE):
+                return self.result_destination()
+            if (event.type == p.SDL_MOUSEBUTTONDOWN and event.button.button == p.SDL_BUTTON_LEFT
+                    and contains(RESULT_BUTTON, event.button.x, event.button.y)):
+                return self.result_destination()
+            return None
+
         if event.type == p.SDL_WINDOWEVENT and event.window.event == p.SDL_WINDOWEVENT_FOCUS_LOST:
             self.keys.clear()
         elif event.type == p.SDL_KEYUP:
@@ -54,6 +84,8 @@ class Market:
             elif key == p.SDLK_e:
                 if self.shelf:
                     self.shelf = None
+                elif self.actor.at_checkout():
+                    self.inspect_cart()
                 else:
                     nearby = self.actor.nearby()
                     if nearby and self.actor.align(*nearby):
@@ -95,6 +127,11 @@ class Market:
 
     def update(self, dt):
         self.state.update(dt)
+        if self.state.outcome is not None:
+            self.keys.clear()
+            self.actor.moving = False
+            return
+        self.inspection_time = max(0, self.inspection_time - dt)
         self.message_time -= dt
         if self.message_time <= 0:
             self.message = ''
@@ -103,6 +140,10 @@ class Market:
             self.actor.move(int(down(RIGHT)) - int(down(LEFT)),
                             int(down(DOWN)) - int(down(UP)), dt,
                             down((p.SDLK_LSHIFT, p.SDLK_RSHIFT)))
+            inside = self.actor.at_checkout()
+            if inside and not self.checkout_inside:
+                self.inspect_cart()
+            self.checkout_inside = inside
 
     def draw(self):
         if self.shelf:
@@ -110,3 +151,4 @@ class Market:
         else:
             draw_world(self.art, self.actor, self.sprite)
         self.hud.draw(self.art, self.state, self.actor)
+        draw_result(self.art, self)

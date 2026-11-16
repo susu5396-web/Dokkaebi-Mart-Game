@@ -78,33 +78,54 @@ class Art:
             return
         p.SDL_RenderCopy(renderer(), image.texture, ctypes.byref(src), ctypes.byref(dst))
 
-    def font(self, size, bold=False):
-        key = size, bold
+    def font(self, size, bold=False, regular=False):
+        key = size, bold, regular
         if key not in self.fonts:
             path = ROOT.parent / 'assets/fonts/Jua-Regular.ttf'
+            regular_path = Path(os.environ.get('WINDIR', 'C:/Windows')) / 'Fonts/malgun.ttf'
+            if regular and regular_path.exists():
+                path = regular_path
             self.fonts[key] = p.load_font(str(path), size)
         return self.fonts[key]
 
-    def text(self, value, x, y, size=18, color=INK, center=False, max_width=None, bold=False):
-        font = self.font(size, bold)
+    def text(self, value, x, y, size=18, color=INK, center=False, max_width=None, bold=False, regular=False):
+        # Thin product labels are rasterized at the actual display resolution.
+        # Downsampling already small strokes from the logical canvas loses detail.
+        scale = 1.0
+        if regular:
+            sx, sy = ctypes.c_float(), ctypes.c_float()
+            p.SDL_RenderGetScale(renderer(), ctypes.byref(sx), ctypes.byref(sy))
+            scale = max(.01, sy.value)
+        font = self.font(max(1, round(size * scale)), bold, regular)
         def width():
             w, h = ctypes.c_int(), ctypes.c_int()
             p.TTF_SizeUTF8(font.font, value.encode('utf-8'), ctypes.byref(w), ctypes.byref(h))
-            return w.value
+            return w.value / scale
         while max_width and width() > max_width and size > 11:
             size -= 1
-            font = self.font(size, bold)
+            font = self.font(max(1, round(size * scale)), bold, regular)
         if center:
             x -= width() / 2
-        # pico2d 글꼴 좌표는 기존 캔버스 높이를 기준으로 변환된다.
+        if regular:
+            surface = p.TTF_RenderUTF8_Blended(font.font, value.encode('utf-8'), p.SDL_Color(*color, 255))
+            texture = p.SDL_CreateTextureFromSurface(renderer(), surface)
+            w, h = surface.contents.w / scale, surface.contents.h / scale
+            p.SDL_FreeSurface(surface)
+            try:
+                p.SDL_SetTextureScaleMode(texture, p.SDL_ScaleModeLinear)
+                dst = p.SDL_Rect(round(x), round(y - h / 2), round(w), round(h))
+                p.SDL_RenderCopy(renderer(), texture, None, ctypes.byref(dst))
+            finally:
+                p.SDL_DestroyTexture(texture)
+            return
         font.draw(x, p.open_canvas.__globals__['canvas_height'] - y, value, color)
 
-    def lines(self, value, x, y, width, size=16, color=INK, bold=False):
+    def lines(self, value, x, y, width, size=16, color=INK, bold=False, regular=False):
         # 한국어 긴 상품명은 단어 경계 없이도 두 줄로 읽을 수 있게 한다.
         capacity = max(3, int(width / size))
         if len(value) <= capacity:
-            self.text(value, x, y, size, color, True, width, bold)
+            self.text(value, x, y, size, color, True, width, bold, regular)
         else:
             middle = min(capacity, (len(value) + 1) // 2)
-            self.text(value[:middle], x, y - size * .5, size, color, True, width, bold)
-            self.text(value[middle:], x, y + size * .6, size, color, True, width, bold)
+            self.text(value[:middle], x, y - size * .5, size, color, True, width, bold, regular)
+            self.text(value[middle:], x, y + size * .6, size, color, True, width, bold, regular)

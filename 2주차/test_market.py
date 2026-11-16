@@ -65,6 +65,41 @@ class RulesTests(unittest.TestCase):
         self.assertTrue(can_stand(actor.x, actor.y))
         self.assertEqual(actor.x, 100)
 
+    def test_checkout_requires_exact_products_and_quantities(self):
+        state = MarketState(3)
+        pid = next(iter(state.required))
+        state.inventory = dict(state.required)
+        state.inventory[pid] -= 1
+        self.assertEqual(state.checkout(), [(pid, 1)])
+        self.assertIsNone(state.outcome)
+        state.add(pid)
+        extra = next(item for item in PRODUCTS if item not in state.required)
+        state.add(extra)
+        self.assertEqual(state.checkout(), [(extra, -1)])
+        state.discard(extra)
+        state.add(pid)
+        self.assertEqual(state.checkout(), [(pid, -1)])
+        state.discard(pid)
+        self.assertEqual(state.checkout(), [])
+        self.assertEqual(state.outcome, 'success')
+        remaining = state.remaining
+        state.update(5)
+        state.add(extra)
+        self.assertEqual(state.remaining, remaining)
+        self.assertEqual(state.inventory, state.required)
+
+    def test_timeout_prevents_success(self):
+        state = MarketState(3)
+        state.inventory = dict(state.required)
+        state.update(240)
+        state.checkout()
+        self.assertEqual(state.outcome, 'timeout')
+
+    def test_checkout_proximity(self):
+        self.assertFalse(Actor().at_checkout())
+        self.assertTrue(Actor(x=350, y=2100).at_checkout())
+        self.assertFalse(Actor(x=450, y=2100).at_checkout())
+
     def test_timer_warning_boundary(self):
         from market_hud import timer_color
         self.assertEqual(timer_color(60), (40, 61, 83))
@@ -91,6 +126,66 @@ class SceneTests(unittest.TestCase):
         event.key.keysym.sym = code
         event.key.repeat = repeat
         self.game.handle_events([event])
+
+    def test_checkout_retry_rewards_and_acquisition(self):
+        game = self.game
+        game.session.reset()
+        game.session.selected_stage = 1
+        game.request_scene('stage')
+        game.apply_transition()
+        market = game.market
+        market.actor.x, market.actor.y = 350, 2100
+        market.update(.01)
+        self.assertTrue(market.differences)
+        self.assertIsNone(market.state.outcome)
+        self.assertEqual(game.session.funds, 0)
+        remaining = market.state.remaining
+        market.update(.5)
+        self.assertLess(market.state.remaining, remaining)
+        market.state.inventory = dict(market.state.required)
+        self.key(self.p.SDLK_e)
+        self.assertEqual(market.state.outcome, 'success')
+        self.assertEqual(game.session.funds, 5000)
+        self.assertTrue(game.session.stage2_unlocked)
+        market.inspect_cart()
+        market.update(1)
+        self.assertEqual(game.session.funds, 5000)
+        game.draw()
+        self.key(self.p.SDLK_RETURN)
+        self.assertEqual(game.scene, 'lobby')
+        game.session.funds = 40000
+        game.session.choose_stage(2)
+        game.request_scene('stage')
+        game.apply_transition()
+        market.actor.x, market.actor.y = 350, 2100
+        market.state.inventory = dict(market.state.required)
+        market.update(.01)
+        self.assertEqual(market.reward, 10000)
+        self.assertEqual(game.session.funds, 50000)
+        self.assertTrue(game.session.acquired)
+        self.key(self.p.SDLK_RETURN)
+        self.assertEqual(game.scene, 'ending')
+        game.draw()
+        game.session.reset()
+
+    def test_timeout_has_no_reward_and_accepts_result_button(self):
+        game = self.game
+        game.session.reset()
+        game.request_scene('stage')
+        game.apply_transition()
+        game.market.state.remaining = .001
+        game.market.update(.01)
+        self.assertEqual(game.market.state.outcome, 'timeout')
+        self.assertEqual(game.session.funds, 0)
+        game.draw()
+        from market_result import RESULT_BUTTON
+        event = self.p.SDL_Event()
+        event.type = self.p.SDL_MOUSEBUTTONDOWN
+        event.button.button = self.p.SDL_BUTTON_LEFT
+        event.button.x = int(RESULT_BUTTON[0] + 10)
+        event.button.y = int(RESULT_BUTTON[1] + 10)
+        game.handle_events([event])
+        self.assertEqual(game.scene, 'lobby')
 
     def test_shopping_round_trip(self):
         p, game = self.p, self.game

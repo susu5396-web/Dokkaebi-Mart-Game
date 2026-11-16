@@ -23,17 +23,37 @@ class MarketState:
             self.required[pid] += 1
         self.inventory = {}
         self.remaining = 240.0
+        self.outcome = None
 
     def add(self, pid):
-        if pid in PRODUCTS:
+        if self.outcome is None and pid in PRODUCTS:
             self.inventory[pid] = self.inventory.get(pid, 0) + 1
 
     def discard(self, pid):
-        if pid not in self.inventory:
+        if self.outcome is not None or pid not in self.inventory:
             return
         self.inventory[pid] -= 1
         if self.inventory[pid] == 0:
             del self.inventory[pid]
 
+    def checkout(self):
+        if self.outcome is not None:
+            return []
+        if self.remaining <= 0:
+            self.outcome = 'timeout'
+            return []
+        differences = []
+        for pid in dict.fromkeys((*self.required, *self.inventory)):
+            delta = self.required.get(pid, 0) - self.inventory.get(pid, 0)
+            if delta:
+                differences.append((pid, delta))
+        if not differences:
+            self.outcome = 'success'
+        return differences
+
     def update(self, dt):
+        if self.outcome is not None:
+            return
         self.remaining = max(0.0, self.remaining - dt)
+        if self.remaining == 0:
+            self.outcome = 'timeout'

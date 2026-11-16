@@ -59,7 +59,7 @@ class Game:
         # 첫 화면을 먼저 보여주고 리소스를 준비해 게임 입장 때의 로딩을 없앤다.
         self.draw()
         pico2d.update_canvas()
-        self.market = Market()
+        self.market = Market(self.session)
         self.configure_renderer(stage=True)
         self.market.preload()
         self.configure_renderer()
@@ -115,7 +115,7 @@ class Game:
         self.pending_scene = None
         if self.scene == 'stage':
             if self.market is None:
-                self.market = Market()
+                self.market = Market(self.session)
             else:
                 self.market.reset()
         self.configure_renderer()

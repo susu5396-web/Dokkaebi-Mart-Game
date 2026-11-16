@@ -58,6 +58,12 @@ class Actor:
         self.moving = old != (self.x, self.y)
         self.animation += dt * (12 if running else 8)
 
+    def at_checkout(self):
+        x, y, w, h = CHECKOUT
+        dx = max(x - self.x, 0, self.x - (x + w))
+        dy = max(y - self.y, 0, self.y - (y + h))
+        return dx * dx + dy * dy <= 75 ** 2
+
     def nearby(self):
         candidates = []
         for i, (x, y, w, h) in enumerate(SHELVES):

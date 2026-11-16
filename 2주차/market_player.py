@@ -31,7 +31,7 @@ class PlayerSprite:
                     top, bottom = max(0, top - 2), min(sheet.height, bottom + 2)
                     a, b, c, d = strip.crop((0, top, strip.width, bottom)).getbbox()
                     self.frames[row, col] = (left + a, top + b, c - a, d - b)
-        self.scale = 104 / max(max(frame[2:]) for frame in self.frames.values())
+        self.scale = (104 * 1.2) / max(max(frame[2:]) for frame in self.frames.values())
 
     def draw(self, actor, x, y):
         direction = {'down': 0, 'right': 1, 'left': 1, 'up': 2}[actor.direction]

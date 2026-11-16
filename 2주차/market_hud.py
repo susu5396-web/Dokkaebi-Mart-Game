@@ -72,7 +72,7 @@ class MarketHUD:
             product = PRODUCTS[pid]
             cy = y + 95 + index * 47
             art.draw('icons/' + product.icon, (x + 14, cy - 26, 55, 53), trim=True)
-            art.lines(product.name, x + 202, cy, 250, 26)
+            art.lines(product.name, x + 202, cy, 250, 26, regular=True)
             art.text(f'{count}개', x + 357, cy, 26, center=True)
             if index < len(state.required) - 1:
                 box((x + 20, cy + 24, w - 40, 1), (180, 205, 222))
