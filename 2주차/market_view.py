@@ -4,7 +4,7 @@ from market_art import VIEW_W, VIEW_H, SCREEN_W, SCREEN_H, box, clip
 from market_world import SHELVES, CHECKOUT, DOKKAEBI_DEN, camera
 
 
-def draw_world(art, actor, sprite, dokkaebi=(), dokkaebi_sprite=None):
+def draw_world(art, actor, sprite, dokkaebi=(), dokkaebi_sprite=None, message=""):
     cx, cy = camera(actor, VIEW_W, VIEW_H)
     clip((0, 0, VIEW_W, VIEW_H))
     tile = 400
@@ -27,13 +27,19 @@ def draw_world(art, actor, sprite, dokkaebi=(), dokkaebi_sprite=None):
     actors = [(actor, sprite)] + [(enemy, dokkaebi_sprite) for enemy in dokkaebi]
     for character, sheet in sorted(actors, key=lambda pair: pair[0].y):
         sheet.draw(character, character.x - cx, character.y - cy)
+        if getattr(character, "stolen_pid", None) is not None:
+            art.text(f"도난 {character.escape_in:.1f}초", character.x - cx, character.y - cy - 80,
+                     23, (180, 48, 39), center=True)
+    if message:
+        box((40, 145, VIEW_W - 80, 50), (255, 248, 230))
+        art.text(message, VIEW_W / 2, 170, 25, center=True, max_width=VIEW_W - 110)
     nearby = actor.nearby()
     if nearby:
         box(((VIEW_W - 500) / 2, VIEW_H - 66, 500, 42), (253, 245, 225))
         art.text(f'E  {CATEGORIES[nearby[0]]} 매대 살펴보기', VIEW_W / 2, VIEW_H - 45, 23, center=True)
     clip()
     box((0, VIEW_H, VIEW_W, 70), (238, 230, 208))
-    art.text('WASD / 방향키 이동   Shift 달리기   E 매대 보기', 24, VIEW_H + 21, 23)
+    art.text('WASD / 방향키 이동   Shift 달리기   E 매대 보기   R 도깨비 퇴치', 24, VIEW_H + 21, 23)
     art.text('계산대 도착: 검사   E: 재검사 / 매대 보기   Esc: 로비', 24, VIEW_H + 51, 21)
 
 
@@ -57,4 +63,4 @@ def draw_shelf(art, state, category, section, message):
     clip()
     box((0, VIEW_H, VIEW_W, 70), (238, 230, 208))
     art.text('W/S 또는 위/아래 방향키: 한 번에 한 칸 이동', 24, VIEW_H + 20, 26)
-    art.text('상품 클릭: 담기   E / Esc: 탑뷰로 돌아가기', 24, VIEW_H + 51, 26)
+    art.text('상품 클릭: 담기   R: 도깨비 퇴치   E / Esc: 탑뷰', 24, VIEW_H + 51, 26)
