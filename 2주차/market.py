@@ -1,11 +1,14 @@
 """장보기 장면의 입력 및 수명 관리."""
+import random
+from math import hypot
 import pico2d as p
 from catalog import PRODUCTS
 from market_state import MarketState
 from market_world import Actor, contains
 from market_art import Art, VIEW_W
 from market_player import PlayerSprite
-from market_dokkaebi import DokkaebiSprite, spawn_dokkaebi
+from market_dokkaebi import (DokkaebiSprite, spawn_dokkaebi, movement_clear, clear_path,
+    PLAYER_RADIUS, ENEMY_RADIUS, ATTACK_RANGE, STEAL_RANGE, ESCAPE_DELAY)
 from market_hud import MarketHUD
 from market_view import draw_world, draw_shelf, product_slots
 from market_result import draw_result, RESULT_BUTTON
@@ -32,6 +35,7 @@ class Market:
         self.stage = self.session.selected_stage or 1
         self.dokkaebi = spawn_dokkaebi(self.stage)
         self.reward = 0
+        self.attack_in = 0
         self.checkout_inside = False
         self.differences = []
         self.inspection_time = 0
@@ -44,6 +48,42 @@ class Market:
         for icon in {product.icon for product in PRODUCTS.values()}:
             for w, h in ((55, 53), (85, 73), (width - 24, 270)):
                 self.art.draw('icons/' + icon, (0, 0, w, h), trim=True)
+
+    def player_path_clear(self, start):
+        return movement_clear(start, (self.actor.x, self.actor.y),
+                              [(enemy, ENEMY_RADIUS) for enemy in self.dokkaebi], PLAYER_RADIUS)
+
+    def align_player(self, category, section, side):
+        old = self.actor.x, self.actor.y
+        old_direction = self.actor.direction
+        if not self.actor.align(category, section, side):
+            return False
+        if not self.player_path_clear(old):
+            self.actor.x, self.actor.y = old
+            self.actor.direction = old_direction
+            return False
+        return True
+
+    def repel(self):
+        if self.attack_in > 0:
+            return
+        self.attack_in = .5
+        count = 0
+        recovered = 0
+        for enemy in self.dokkaebi:
+            if (enemy.phase == 'active' and hypot(enemy.x - self.actor.x, enemy.y - self.actor.y) <= ATTACK_RANGE
+                    and clear_path((self.actor.x, self.actor.y), (enemy.x, enemy.y))):
+                if enemy.stolen_pid is not None:
+                    self.state.add(enemy.stolen_pid)
+                    recovered += 1
+                count += enemy.banish()
+        self.message = f'도깨비 {count}마리 퇴치! 5초 후 다시 나타납니다.' if count else '가까이에 퇴치할 도깨비가 없습니다.'
+        if recovered:
+            self.message += f' 물건 {recovered}개를 되찾았어요.'
+        self.message_time = 2
+        if count:
+            self.shelf = None
+            self.keys.clear()
 
     def inspect_cart(self):
         if self.shelf or not self.actor.at_checkout() or self.state.outcome is not None:
@@ -84,6 +124,8 @@ class Market:
                     self.keys.clear()
                 else:
                     return 'lobby'
+            elif key == p.SDLK_r:
+                self.repel()
             elif key == p.SDLK_e:
                 if self.shelf:
                     self.shelf = None
@@ -91,7 +133,7 @@ class Market:
                     self.inspect_cart()
                 else:
                     nearby = self.actor.nearby()
-                    if nearby and self.actor.align(*nearby):
+                    if nearby and self.align_player(*nearby):
                         self.shelf = nearby
                 self.keys.clear()
                 self.actor.moving = False
@@ -101,7 +143,7 @@ class Market:
                     return None
                 category, section, side = self.shelf
                 target = section + (-1 if key in UP else 1)
-                if 0 <= target < 8 and self.actor.align(category, target, side):
+                if 0 <= target < 8 and self.align_player(category, target, side):
                     self.shelf = category, target, side
         elif event.type == p.SDL_MOUSEBUTTONDOWN and event.button.button == p.SDL_BUTTON_LEFT:
             x, y = event.button.x, event.button.y
@@ -136,27 +178,41 @@ class Market:
             for enemy in self.dokkaebi:
                 enemy.moving = False
             return
+        self.attack_in = max(0, self.attack_in - dt)
         self.inspection_time = max(0, self.inspection_time - dt)
         self.message_time -= dt
         if self.message_time <= 0:
             self.message = ''
         if not self.shelf:
             down = lambda keys: any(key in self.keys for key in keys)
+            old = self.actor.x, self.actor.y
             self.actor.move(int(down(RIGHT)) - int(down(LEFT)),
                             int(down(DOWN)) - int(down(UP)), dt,
                             down((p.SDLK_LSHIFT, p.SDLK_RSHIFT)))
+            if not self.player_path_clear(old):
+                self.actor.x, self.actor.y = old
+                self.actor.moving = False
             inside = self.actor.at_checkout()
             if inside and not self.checkout_inside:
                 self.inspect_cart()
             self.checkout_inside = inside
         if self.state.outcome is None:
             for enemy in self.dokkaebi:
-                enemy.update(dt, self.actor)
+                enemy.update(dt, self.actor, self.dokkaebi)
+                if (enemy.phase == 'active' and enemy.stolen_pid is None and self.state.inventory
+                        and hypot(enemy.x - self.actor.x, enemy.y - self.actor.y) <= STEAL_RANGE
+                        and clear_path((enemy.x, enemy.y), (self.actor.x, self.actor.y))):
+                    pid = random.choice(list(self.state.inventory))
+                    self.state.discard(pid)
+                    enemy.stolen_pid = pid
+                    enemy.escape_in = ESCAPE_DELAY
+                    self.message = PRODUCTS[pid].name + ' 1개 도난! 5초 안에 R로 되찾으세요.'
+                    self.message_time = 3
 
     def draw(self):
         if self.shelf:
             draw_shelf(self.art, self.state, *self.shelf[:2], self.message)
         else:
-            draw_world(self.art, self.actor, self.sprite, self.dokkaebi, self.dokkaebi_sprite)
+            draw_world(self.art, self.actor, self.sprite, self.dokkaebi, self.dokkaebi_sprite, self.message)
         self.hud.draw(self.art, self.state, self.actor)
         draw_result(self.art, self)

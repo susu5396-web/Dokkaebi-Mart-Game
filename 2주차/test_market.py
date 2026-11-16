@@ -213,6 +213,83 @@ class SceneTests(unittest.TestCase):
         self.assertEqual((market.dokkaebi[0].x, market.dokkaebi[0].y), (2100, 100))
         game.draw()
 
+    def encounter(self, stage=1):
+        game = self.game
+        game.session.reset()
+        game.session.stage2_unlocked = True
+        game.session.choose_stage(stage)
+        game.request_scene('stage')
+        game.apply_transition()
+        market = game.market
+        market.actor.x, market.actor.y = 500, 1950
+        market.dokkaebi[0].x, market.dokkaebi[0].y = 620, 1950
+        if stage == 2:
+            market.dokkaebi[1].x, market.dokkaebi[1].y = 380, 1950
+        return market
+
+    def test_theft_once_per_enemy_and_recovery_with_r(self):
+        market = self.encounter(2)
+        pid = next(iter(market.state.required))
+        for _ in range(5):
+            market.state.add(pid)
+        required = dict(market.state.required)
+        market.update(.01)
+        self.assertEqual(market.state.inventory[pid], 3)
+        self.assertTrue(all(enemy.stolen_pid == pid for enemy in market.dokkaebi))
+        for _ in range(40):
+            market.update(.05)
+        self.assertEqual(market.state.inventory[pid], 3)
+        self.key(self.p.SDLK_r)
+        self.assertEqual(market.state.inventory[pid], 5)
+        self.assertTrue(all(enemy.phase == 'vanishing' for enemy in market.dokkaebi))
+        self.key(self.p.SDLK_r, repeat=True)
+        self.assertEqual(market.state.inventory[pid], 5)
+        self.assertEqual(market.state.required, required)
+        self.game.draw()
+        for _ in range(99):
+            market.update(.05)
+        self.assertTrue(all(enemy.phase == 'hidden' for enemy in market.dokkaebi))
+        market.update(.05)
+        self.assertTrue(all(enemy.phase == 'active' for enemy in market.dokkaebi))
+        self.assertTrue(all(enemy.x > 2000 for enemy in market.dokkaebi))
+
+    def test_thief_escapes_after_five_seconds_and_respawns(self):
+        market = self.encounter()
+        pid = next(iter(market.state.required))
+        market.state.add(pid)
+        market.state.add(pid)
+        market.update(.01)
+        enemy = market.dokkaebi[0]
+        for _ in range(99):
+            market.update(.05)
+        self.assertEqual(enemy.phase, 'active')
+        self.assertEqual(market.state.inventory[pid], 1)
+        market.update(.05)
+        self.assertEqual(enemy.phase, 'vanishing')
+        self.assertIsNone(enemy.stolen_pid)
+        self.key(self.p.SDLK_r)
+        self.assertEqual(market.state.inventory[pid], 1)
+        for _ in range(100):
+            market.update(.05)
+        self.assertEqual(enemy.phase, 'active')
+        self.assertGreater(enemy.x, 2000)
+
+    def test_entity_collision_and_empty_cart(self):
+        from math import hypot
+        from market_dokkaebi import FOLLOW_DISTANCE
+        market = self.encounter()
+        enemy = market.dokkaebi[0]
+        market.keys.update((self.p.SDLK_d, self.p.SDLK_LSHIFT))
+        for _ in range(20):
+            market.update(.05)
+            self.assertGreaterEqual(hypot(enemy.x - market.actor.x, enemy.y - market.actor.y), FOLLOW_DISTANCE - 1e-5)
+        self.assertIsNone(enemy.stolen_pid)
+        market.actor.x, market.actor.y = 140, 1000
+        enemy.x, enemy.y = 450, 1000
+        self.key(self.p.SDLK_r)
+        self.assertEqual(enemy.phase, 'active')
+        self.game.session.reset()
+
     def test_shopping_round_trip(self):
         p, game = self.p, self.game
         game.request_scene('stage')
