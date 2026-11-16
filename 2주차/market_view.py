@@ -1,16 +1,19 @@
 """월드와 매대의 시각 표현. 입력과 수량 변경은 장면에서 처리한다."""
 from catalog import CATEGORIES, PRODUCTS
 from market_art import VIEW_W, VIEW_H, SCREEN_W, SCREEN_H, box, clip
-from market_world import SHELVES, CHECKOUT, camera
+from market_world import SHELVES, CHECKOUT, DOKKAEBI_DEN, camera
 
 
-def draw_world(art, actor, sprite):
+def draw_world(art, actor, sprite, dokkaebi=(), dokkaebi_sprite=None):
     cx, cy = camera(actor, VIEW_W, VIEW_H)
     clip((0, 0, VIEW_W, VIEW_H))
     tile = 400
     for y in range(int(cy // tile) * tile, int(cy + VIEW_H) + tile, tile):
         for x in range(int(cx // tile) * tile, int(cx + VIEW_W) + tile, tile):
             art.draw('environment/topview_floor', (x - cx, y - cy, tile, tile))
+    dx, dy, dw, dh = DOKKAEBI_DEN
+    art.draw("environment/dokkaebi_den", (dx - cx, dy - cy, dw, dh), trim=True)
+    art.text("도깨비 굴", dx + dw / 2 - cx, dy + dh + 20 - cy, 23, center=True)
     for category, (x, y, w, h) in enumerate(SHELVES):
         # 세 개의 긴 모듈을 연결해 이동 가능한 8구간 매대를 표현한다.
         for part in range(3):
@@ -21,7 +24,9 @@ def draw_world(art, actor, sprite):
     x, y, w, h = CHECKOUT
     art.draw('environment/checkout', (x - cx, y - cy, w, h), trim=True)
     art.text('계산대 / 도착 시 자동 검사', x + w / 2 - cx, y + h + 24 - cy, 23, center=True)
-    sprite.draw(actor, actor.x - cx, actor.y - cy)
+    actors = [(actor, sprite)] + [(enemy, dokkaebi_sprite) for enemy in dokkaebi]
+    for character, sheet in sorted(actors, key=lambda pair: pair[0].y):
+        sheet.draw(character, character.x - cx, character.y - cy)
     nearby = actor.nearby()
     if nearby:
         box(((VIEW_W - 500) / 2, VIEW_H - 66, 500, 42), (253, 245, 225))

@@ -5,6 +5,7 @@ from market_state import MarketState
 from market_world import Actor, contains
 from market_art import Art, VIEW_W
 from market_player import PlayerSprite
+from market_dokkaebi import DokkaebiSprite, spawn_dokkaebi
 from market_hud import MarketHUD
 from market_view import draw_world, draw_shelf, product_slots
 from market_result import draw_result, RESULT_BUTTON
@@ -20,6 +21,7 @@ class Market:
     def __init__(self, session=None):
         self.session = session if session is not None else Session()
         self.art, self.sprite = Art(), PlayerSprite()
+        self.dokkaebi_sprite = DokkaebiSprite()
         self.reset()
 
     def reset(self):
@@ -28,6 +30,7 @@ class Market:
         self.shelf = None
         self.message, self.message_time = '', 0
         self.stage = self.session.selected_stage or 1
+        self.dokkaebi = spawn_dokkaebi(self.stage)
         self.reward = 0
         self.checkout_inside = False
         self.differences = []
@@ -130,6 +133,8 @@ class Market:
         if self.state.outcome is not None:
             self.keys.clear()
             self.actor.moving = False
+            for enemy in self.dokkaebi:
+                enemy.moving = False
             return
         self.inspection_time = max(0, self.inspection_time - dt)
         self.message_time -= dt
@@ -144,11 +149,14 @@ class Market:
             if inside and not self.checkout_inside:
                 self.inspect_cart()
             self.checkout_inside = inside
+        if self.state.outcome is None:
+            for enemy in self.dokkaebi:
+                enemy.update(dt, self.actor)
 
     def draw(self):
         if self.shelf:
             draw_shelf(self.art, self.state, *self.shelf[:2], self.message)
         else:
-            draw_world(self.art, self.actor, self.sprite)
+            draw_world(self.art, self.actor, self.sprite, self.dokkaebi, self.dokkaebi_sprite)
         self.hud.draw(self.art, self.state, self.actor)
         draw_result(self.art, self)

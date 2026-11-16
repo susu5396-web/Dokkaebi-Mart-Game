@@ -187,6 +187,32 @@ class SceneTests(unittest.TestCase):
         game.handle_events([event])
         self.assertEqual(game.scene, 'lobby')
 
+    def test_dokkaebi_stage_reset_and_result_freeze(self):
+        game = self.game
+        game.session.reset()
+        game.session.stage2_unlocked = True
+        game.session.choose_stage(2)
+        game.request_scene('stage')
+        game.apply_transition()
+        market = game.market
+        self.assertEqual(len(market.dokkaebi), 2)
+        start = [(enemy.x, enemy.y) for enemy in market.dokkaebi]
+        market.update(.05)
+        self.assertNotEqual(start, [(enemy.x, enemy.y) for enemy in market.dokkaebi])
+        market.shelf = (0, 0, -1)
+        before = [(enemy.x, enemy.y) for enemy in market.dokkaebi]
+        market.update(.05)
+        self.assertNotEqual(before, [(enemy.x, enemy.y) for enemy in market.dokkaebi])
+        market.state.outcome = 'success'
+        before = [(enemy.x, enemy.y) for enemy in market.dokkaebi]
+        market.update(.05)
+        self.assertEqual(before, [(enemy.x, enemy.y) for enemy in market.dokkaebi])
+        game.session.reset()
+        market.reset()
+        self.assertEqual(len(market.dokkaebi), 1)
+        self.assertEqual((market.dokkaebi[0].x, market.dokkaebi[0].y), (2100, 100))
+        game.draw()
+
     def test_shopping_round_trip(self):
         p, game = self.p, self.game
         game.request_scene('stage')

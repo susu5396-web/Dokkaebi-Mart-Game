@@ -7,6 +7,9 @@ SECTION_HEIGHT = SHELF_HEIGHT / 8
 SHELVES = tuple((200 + i * 400, SHELF_TOP, SHELF_WIDTH, SHELF_HEIGHT)
                 for i in range(5))
 CHECKOUT = (65, 2040, 240, 130)
+DOKKAEBI_DEN = (2010, 15, 180, 170)
+PLAYER_WALK_SPEED, PLAYER_RUN_SPEED = 250, 400
+DOKKAEBI_SPEED = PLAYER_WALK_SPEED + 5
 AISLE_CENTERS = tuple(100 + i * 400 for i in range(6))
 
 
@@ -40,7 +43,7 @@ class Actor:
             self.animation = 0
             return
         self.direction = ('right' if dx > 0 else 'left') if abs(dx) > abs(dy) else ('down' if dy > 0 else 'up')
-        distance = (400 if running else 250) * min(dt, 0.05)
+        distance = (PLAYER_RUN_SPEED if running else PLAYER_WALK_SPEED) * min(dt, 0.05)
         nx, ny = self.x + dx / length * distance, self.y + dy / length * distance
         old = self.x, self.y
         in_aisle = SHELF_TOP - 43 < self.y < SHELF_TOP + SHELF_HEIGHT + 43
