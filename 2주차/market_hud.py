@@ -44,8 +44,8 @@ class MarketHUD:
 
     def draw(self, art, state, actor):
         box((VIEW_W, 0, 420, SCREEN_H), (224, 232, 226))
-        art.draw('ui/timer_panel', (16, 16, 280, 94))
-        art.text(f'{int(state.remaining)} 초', 182, 66, 30, color=timer_color(state.remaining), center=True)
+        art.draw('ui/timer_panel', (16, 16, 364, 122))
+        art.text(f'{int(state.remaining)} 초', 232, 81, 39, color=timer_color(state.remaining), center=True)
         # 지도에는 매대 카테고리와 플레이어만 표시한다.
         art.draw('ui/minimap_panel', MAP_RECT, trim=True, fit=False)
         art.text('마트 지도', VIEW_W + 230, 47, 30, center=True)
