@@ -48,45 +48,48 @@ class MarketHUD:
         art.text(f'{int(state.remaining)} 초', 182, 66, 30, color=timer_color(state.remaining), center=True)
         # 지도에는 매대 카테고리와 플레이어만 표시한다.
         art.draw('ui/minimap_panel', MAP_RECT, trim=True, fit=False)
-        art.text('마트 지도', VIEW_W + 230, 47, 24, center=True)
+        art.text('마트 지도', VIEW_W + 230, 47, 30, center=True)
         mx, my, mw, mh = VIEW_W + 30, 90, 358, 154
         for i, (sx, sy, sw, sh) in enumerate(SHELVES):
             rx, ry = mx + sx / WORLD_W * mw, my + sy / WORLD_H * mh
             rw, rh = sw / WORLD_W * mw, sh / WORLD_H * mh
+            rx -= rw * .125
+            ry -= rh * .125
+            rw, rh = rw * 1.25, rh * 1.25
             box((rx, ry, rw, rh), (126, 157, 141))
             box((rx + 3, ry + 3, rw - 6, rh - 6), (188, 208, 183))
-            art.text(CATEGORIES[i], rx + rw / 2, 86, 17, center=True)
+            art.text(CATEGORIES[i], rx + rw / 2, 83, 21, center=True)
             for divider in range(1, 4):
                 box((rx + 3, ry + rh * divider / 4, rw - 6, 2), (155, 180, 157))
         px, py = mx + actor.x / WORLD_W * mw, my + actor.y / WORLD_H * mh
-        box((px - 6, py - 6, 12, 12), (255, 255, 255))
-        box((px - 4, py - 4, 8, 8), (30, 100, 221))
-        art.text('파랑: 내 위치', VIEW_W + 318, 249, 15, center=True)
+        box((px - 7.5, py - 7.5, 15, 15), (255, 255, 255))
+        box((px - 5, py - 5, 10, 10), (30, 100, 221))
+        art.text('파랑: 내 위치', VIEW_W + 318, 249, 19, center=True)
         art.draw('ui/shopping_list_panel', LIST_RECT, trim=True, fit=False)
-        art.text('장보기 목록', VIEW_W + 230, 318, 25, center=True)
+        art.text('장보기 목록', VIEW_W + 230, 318, 31, center=True)
         x, y, w, h = LIST_RECT
         for index, (pid, count) in enumerate(state.required.items()):
             product = PRODUCTS[pid]
             cy = y + 95 + index * 47
-            art.draw('icons/' + product.icon, (x + 20, cy - 21, 44, 42), trim=True)
-            art.lines(product.name, x + 208, cy, 238, 21)
-            art.text(f'{count}개', x + 357, cy, 21, center=True)
+            art.draw('icons/' + product.icon, (x + 14, cy - 26, 55, 53), trim=True)
+            art.lines(product.name, x + 202, cy, 250, 26)
+            art.text(f'{count}개', x + 357, cy, 26, center=True)
             if index < len(state.required) - 1:
                 box((x + 20, cy + 24, w - 40, 1), (180, 205, 222))
         art.draw('ui/cart_inventory_panel', CART_RECT, trim=True, fit=False)
-        art.text('카트 인벤토리', VIEW_W + 230, 648, 25, center=True)
-        art.text('상품 클릭: 1개 버리기', VIEW_W + 210, 685, 17, center=True)
+        art.text('카트 인벤토리', VIEW_W + 230, 648, 31, center=True)
+        art.text('상품 클릭: 1개 버리기', VIEW_W + 210, 685, 21, center=True)
         for index in range(6):
             sx, sy, sw, sh = cart_cell(index)
             box((sx, sy, sw, sh), (159, 191, 215))
             box((sx + 2, sy + 2, sw - 4, sh - 4), (253, 249, 237))
         for (sx, sy, sw, sh), pid in self.slots(state):
             product = PRODUCTS[pid]
-            art.draw('icons/' + product.icon, (sx + 22, sy + 5, 68, 58), trim=True)
-            art.lines(product.name, sx + sw / 2, sy + 80, sw - 12, 17)
-            box((sx + sw - 38, sy + 43, 34, 22), (66, 116, 185))
-            art.text(f'x{state.inventory[pid]}', sx + sw - 21, sy + 54, 16, (255, 255, 255), True)
+            art.draw('icons/' + product.icon, (sx + (sw - 85) / 2, sy - 7, 85, 73), trim=True)
+            art.lines(product.name, sx + sw / 2, sy + 83, sw - 8, 21)
+            box((sx + sw - 46, sy + 34, 43, 28), (66, 116, 185))
+            art.text(f'x{state.inventory[pid]}', sx + sw - 25, sy + 48, 20, (255, 255, 255), True)
         if not state.inventory:
-            art.text('카트가 비어 있습니다', VIEW_W + 210, 932, 17, center=True)
+            art.text('카트가 비어 있습니다', VIEW_W + 210, 932, 21, center=True)
         if len(state.inventory) > 6:
-            art.text('마우스 휠: 다른 상품 보기', VIEW_W + 210, 932, 17, center=True)
+            art.text('마우스 휠: 다른 상품 보기', VIEW_W + 210, 932, 21, center=True)

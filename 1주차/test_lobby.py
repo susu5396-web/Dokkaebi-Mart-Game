@@ -17,7 +17,10 @@ def click(rect=None, position=None):
     event = pico2d.SDL_Event()
     event.type = pico2d.SDL_MOUSEBUTTONDOWN
     event.button.button = pico2d.SDL_BUTTON_LEFT
-    event.button.x, event.button.y = int(x + MENU_X), int(HEIGHT - 1 - y + MENU_Y)
+    if LobbyFlowTests.game.scene in ("lobby", "ending"):
+        event.button.x, event.button.y = round(x * 950 / WIDTH), round(621 - y * 622 / HEIGHT)
+    else:
+        event.button.x, event.button.y = int(x + MENU_X), int(HEIGHT - 1 - y + MENU_Y)
     return event
 
 

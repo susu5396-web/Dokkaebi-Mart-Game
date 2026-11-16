@@ -31,7 +31,7 @@ class Market:
         draw_shelf(self.art, self.state, 0, 0, '')
         width = product_slots()[0][2]
         for icon in {product.icon for product in PRODUCTS.values()}:
-            for w, h in ((44, 42), (68, 58), (width - 24, 270)):
+            for w, h in ((55, 53), (85, 73), (width - 24, 270)):
                 self.art.draw('icons/' + icon, (0, 0, w, h), trim=True)
 
     def handle(self, event):

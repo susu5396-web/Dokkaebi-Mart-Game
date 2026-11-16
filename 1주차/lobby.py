@@ -9,7 +9,20 @@ from settings import (
     WIDTH, HEIGHT, LOBBY_ASSET_DIR, LOBBY_BACKGROUND, LOBBY_PANEL,
     LOBBY_STAGE, LOBBY_LOCKED, LOBBY_ACCOUNT, LOBBY_MUTED, FONT_PATH,
 )
-from ui import NAVY, BLUE, inside, rounded_box, text_width, load_ui_image
+from ui import NAVY, BLUE, inside, rounded_box as base_rounded_box, text_width, load_ui_image
+
+
+# Draw at native window resolution while retaining layout coordinates.
+SCALE_X, SCALE_Y = 950 / WIDTH, 622 / HEIGHT
+
+
+def screen_rect(rect):
+    x, y, w, h = rect
+    return x * SCALE_X, HEIGHT - 622 + y * SCALE_Y, w * SCALE_X, h * SCALE_Y
+
+
+def rounded_box(rect, color, radius=14):
+    base_rounded_box(screen_rect(rect), color, radius)
 
 
 STAGE_ONE = (32, 132, 211, 220)
@@ -35,10 +48,11 @@ class LobbyUI:
         fonts = Path(os.environ.get("WINDIR", "C:/Windows")) / "Fonts"
         self.fonts = {
             size: pico2d.load_font(str(FONT_PATH), size)
-            for size in (12, 13, 14, 15, 16, 18, 20, 22, 24, 28)
+            for size in range(12, 37)
         }
 
     def art(self, name, rect, stretch=False, silhouette=False, tint=None):
+        rect = screen_rect(rect)
         image = self.images[name]
         left, top, right, bottom = self.bounds[name]
         sw, sh = right - left, bottom - top
@@ -80,6 +94,9 @@ class LobbyUI:
             image.opacify(1.0)
 
     def text(self, text, x, y, size=16, color=NAVY, center=False, max_width=None):
+        x, y = x * SCALE_X, HEIGHT - 622 + y * SCALE_Y
+        size = min(36, round(size * 1.22))
+        max_width = max_width * SCALE_X if max_width else None
         font = self.fonts[size]
         if max_width:
             for candidate in sorted((s for s in self.fonts if s <= size), reverse=True):
@@ -153,16 +170,16 @@ class LobbyUI:
         self.art("badge", (77, 291, 120, 24), stretch=True)
         self.text("도깨비 1마리", 137, 303, 16, center=True)
         self.text("도깨비 2마리", 360, 303, 16, LOBBY_MUTED, center=True)
-        self.art("dokkaebi_clean", (82, 177, 110, 106))
+        self.art("dokkaebi_clean", (72, 171, 130, 126))
         self.art("dokkaebi_clean", (281, 192, 95, 86), silhouette=True)
         self.art("dokkaebi_clean", (346, 192, 95, 86), silhouette=True)
-        self.art("lock_icon", (327, 195, 69, 83))
+        self.art("lock_icon", (320, 188, 83, 100))
         self.art("badge", (63, 145, 148, 25), stretch=True)
         selected = self.session.selected_stage == 1
         self.text("선택 완료" if selected else "선택 가능", 137, 157, 16, BLUE, center=True)
         self.text("1스테이지 완료 시 해금", 360, 157, 14, LOBBY_MUTED, center=True)
         if inside(*mouse, STAGE_ONE):
-            self.text("클릭하여 선택", 137, 183, 12, BLUE, center=True)
+            self.text("클릭하여 선택", 137, 136, 12, BLUE, center=True)
 
         self.art("panel_flat", (498, 112, 286, 295), stretch=True)
         self.art("crown_icon", (515, 369, 29, 25))

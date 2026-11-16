@@ -36,7 +36,7 @@ def collect_events():
 
 class Game:
     def __init__(self, development_mode=DEVELOPMENT_MODE, animate_transitions=True):
-        self.background = load_ui_image(START_ASSET_DIR / "start.png")
+        self.background = load_ui_image(START_ASSET_DIR / "start-wide.png")
         self.start_button = load_ui_image(START_ASSET_DIR / "start_button.png")
         self.name_background = load_ui_image(Path(__file__).resolve().parent / '2주차/assets/ui/nickname_background.png')
         self.session = Session()
@@ -73,8 +73,14 @@ class Game:
         else:
             pico2d.SDL_RenderSetLogicalSize(renderer, 0, 0)
             pico2d.SDL_RenderSetScale(renderer, 1, 1)
-            viewport = pico2d.SDL_Rect(MENU_X, MENU_Y, WIDTH, HEIGHT)
-            pico2d.SDL_RenderSetViewport(renderer, ctypes.byref(viewport))
+            if self.scene not in ("title", "lobby", "ending"):
+                viewport = pico2d.SDL_Rect(MENU_X, MENU_Y, WIDTH, HEIGHT)
+                pico2d.SDL_RenderSetViewport(renderer, ctypes.byref(viewport))
+
+    def menu_position(self, x, y):
+        if self.scene in ("lobby", "ending"):
+            return x * WIDTH / WINDOW_W, (WINDOW_H - 1 - y) * HEIGHT / WINDOW_H
+        return x - MENU_X, HEIGHT - 1 - (y - MENU_Y)
 
     def request_scene(self, scene):
         if scene == "quit":
@@ -159,7 +165,7 @@ class Game:
                     self.nickname_ui.composition = bytes(event.edit.text).decode("utf-8")
                     self.nickname_ui.error = ""
             elif event.type == pico2d.SDL_MOUSEBUTTONDOWN and event.button.button == pico2d.SDL_BUTTON_LEFT:
-                x, y = event.button.x - MENU_X, HEIGHT - 1 - (event.button.y - MENU_Y)
+                x, y = self.menu_position(event.button.x, event.button.y)
                 if self.scene == "title":
                     if abs(x - BUTTON_X) <= BUTTON_WIDTH / 2 and abs(y - BUTTON_Y) <= BUTTON_HEIGHT / 2:
                         self.request_scene("nickname")
@@ -196,7 +202,7 @@ class Game:
         mouse_x, mouse_y = ctypes.c_int(), ctypes.c_int()
         pico2d.SDL_GetMouseState(ctypes.byref(mouse_x), ctypes.byref(mouse_y))
         if pico2d.SDL_GetMouseFocus():
-            self.mouse = (mouse_x.value - MENU_X, HEIGHT - 1 - (mouse_y.value - MENU_Y))
+            self.mouse = self.menu_position(mouse_x.value, mouse_y.value)
         else:
             self.mouse = (-1, -1)
         x, y = self.mouse
@@ -210,8 +216,8 @@ class Game:
         pico2d.SDL_SetRenderDrawColor(renderer, 239, 242, 225, 255)
         pico2d.SDL_RenderClear(renderer)
         if self.scene == "title":
-            self.background.draw(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT)
-            self.start_button.draw(BUTTON_X, BUTTON_Y,
+            self.background.draw(WINDOW_W / 2, HEIGHT - WINDOW_H / 2, WINDOW_W, WINDOW_H)
+            self.start_button.draw(BUTTON_X + MENU_X, BUTTON_Y - MENU_Y,
                                    round(BUTTON_WIDTH * self.scale), round(BUTTON_HEIGHT * self.scale))
         elif self.scene == "nickname":
             self.name_background.draw(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT)
