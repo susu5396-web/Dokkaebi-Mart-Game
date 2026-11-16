@@ -19,6 +19,10 @@ from lobby import LobbyUI
 from market import Market
 from market_art import SCREEN_W, SCREEN_H
 
+WINDOW_W, WINDOW_H = 950, 622
+MENU_X, MENU_Y = (WINDOW_W - WIDTH) // 2, (WINDOW_H - HEIGHT) // 2
+FADE_OUT, FADE_IN = .12, .16
+
 
 def collect_events():
     # pico2d 기본 함수가 제외하는 한글 조합·확정 이벤트까지 수집한다.
@@ -47,7 +51,30 @@ class Game:
         self.animate_transitions = animate_transitions
         self.fade_phase = None
         self.fade_time = 0.0
+        canvas = pico2d.open_canvas.__globals__
+        pico2d.SDL_SetWindowSize(canvas['window'], WINDOW_W, WINDOW_H)
+        pico2d.SDL_SetWindowPosition(canvas['window'], pico2d.SDL_WINDOWPOS_CENTERED, pico2d.SDL_WINDOWPOS_CENTERED)
+        self.configure_renderer()
         pico2d.SDL_StopTextInput()
+        # 첫 화면을 먼저 보여주고 리소스를 준비해 게임 입장 때의 로딩을 없앤다.
+        self.draw()
+        pico2d.update_canvas()
+        self.market = Market()
+        self.configure_renderer(stage=True)
+        self.market.preload()
+        self.configure_renderer()
+
+    def configure_renderer(self, stage=None):
+        renderer = pico2d.open_canvas.__globals__['renderer']
+        pico2d.SDL_RenderSetViewport(renderer, None)
+        is_stage = self.scene == 'stage' if stage is None else stage
+        if is_stage:
+            pico2d.SDL_RenderSetLogicalSize(renderer, SCREEN_W, SCREEN_H)
+        else:
+            pico2d.SDL_RenderSetLogicalSize(renderer, 0, 0)
+            pico2d.SDL_RenderSetScale(renderer, 1, 1)
+            viewport = pico2d.SDL_Rect(MENU_X, MENU_Y, WIDTH, HEIGHT)
+            pico2d.SDL_RenderSetViewport(renderer, ctypes.byref(viewport))
 
     def request_scene(self, scene):
         if scene == "quit":
@@ -85,13 +112,7 @@ class Game:
                 self.market = Market()
             else:
                 self.market.reset()
-        canvas = pico2d.open_canvas.__globals__
-        pico2d.SDL_SetHint(b'SDL_RENDER_SCALE_QUALITY', b'1')
-        logical_w, logical_h = (SCREEN_W, SCREEN_H) if self.scene == 'stage' else (WIDTH, HEIGHT)
-        w, h = (1100, 720) if self.scene == 'stage' else (WIDTH, HEIGHT)
-        pico2d.SDL_SetWindowSize(canvas['window'], w, h)
-        pico2d.SDL_RenderSetLogicalSize(canvas['renderer'], logical_w, logical_h)
-        pico2d.SDL_SetWindowPosition(canvas['window'], pico2d.SDL_WINDOWPOS_CENTERED, pico2d.SDL_WINDOWPOS_CENTERED)
+        self.configure_renderer()
         if self.scene == "nickname":
             self.nickname_ui.value = ""
             self.nickname_ui.saved_name = ""
@@ -138,7 +159,7 @@ class Game:
                     self.nickname_ui.composition = bytes(event.edit.text).decode("utf-8")
                     self.nickname_ui.error = ""
             elif event.type == pico2d.SDL_MOUSEBUTTONDOWN and event.button.button == pico2d.SDL_BUTTON_LEFT:
-                x, y = event.button.x, HEIGHT - 1 - event.button.y
+                x, y = event.button.x - MENU_X, HEIGHT - 1 - (event.button.y - MENU_Y)
                 if self.scene == "title":
                     if abs(x - BUTTON_X) <= BUTTON_WIDTH / 2 and abs(y - BUTTON_Y) <= BUTTON_HEIGHT / 2:
                         self.request_scene("nickname")
@@ -159,14 +180,14 @@ class Game:
     def update(self, dt):
         if self.fade_phase is not None:
             self.fade_time += dt
-            if self.fade_phase == 'out' and self.fade_time >= .25:
-                # 완전히 검은 프레임을 먼저 표시한 뒤 다음 프레임에서 창을 변경한다.
+            if self.fade_phase == 'out' and self.fade_time >= FADE_OUT:
+                # 검은 프레임을 한 번 표시하고 창 변경 없이 장면만 바꾼다.
                 self.fade_phase = 'switch'
             elif self.fade_phase == 'switch':
                 self.commit_transition()
                 self.fade_phase = 'in'
                 self.fade_time = 0.0
-            elif self.fade_phase == 'in' and self.fade_time >= .35:
+            elif self.fade_phase == 'in' and self.fade_time >= FADE_IN:
                 self.fade_phase = None
             return
         if self.scene == 'stage':
@@ -175,7 +196,7 @@ class Game:
         mouse_x, mouse_y = ctypes.c_int(), ctypes.c_int()
         pico2d.SDL_GetMouseState(ctypes.byref(mouse_x), ctypes.byref(mouse_y))
         if pico2d.SDL_GetMouseFocus():
-            self.mouse = (mouse_x.value, HEIGHT - 1 - mouse_y.value)
+            self.mouse = (mouse_x.value - MENU_X, HEIGHT - 1 - (mouse_y.value - MENU_Y))
         else:
             self.mouse = (-1, -1)
         x, y = self.mouse
@@ -184,7 +205,10 @@ class Game:
         self.scale += (target - self.scale) * min(1.0, dt * 16.0)
 
     def draw(self):
-        pico2d.clear_canvas()
+        renderer = pico2d.open_canvas.__globals__['renderer']
+        # 전체 버퍼를 먼저 채워 뷰포트 바깥에 이전 화면의 선이 남지 않게 한다.
+        pico2d.SDL_SetRenderDrawColor(renderer, 239, 242, 225, 255)
+        pico2d.SDL_RenderClear(renderer)
         if self.scene == "title":
             self.background.draw(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT)
             self.start_button.draw(BUTTON_X, BUTTON_Y,
@@ -199,13 +223,17 @@ class Game:
         else:
             self.lobby.draw_preview(self.mouse, self.scene == "ending")
         if self.fade_phase is not None:
-            opacity = (min(1.0, self.fade_time / .25) if self.fade_phase == 'out'
-                       else max(0.0, 1.0 - self.fade_time / .35) if self.fade_phase == 'in' else 1.0)
+            opacity = (min(1.0, self.fade_time / FADE_OUT) if self.fade_phase == 'out'
+                       else max(0.0, 1.0 - self.fade_time / FADE_IN) if self.fade_phase == 'in' else 1.0)
             renderer = pico2d.open_canvas.__globals__['renderer']
+            pico2d.SDL_RenderSetLogicalSize(renderer, 0, 0)
+            pico2d.SDL_RenderSetScale(renderer, 1, 1)
+            pico2d.SDL_RenderSetViewport(renderer, None)
             pico2d.SDL_SetRenderDrawBlendMode(renderer, pico2d.SDL_BLENDMODE_BLEND)
             pico2d.SDL_SetRenderDrawColor(renderer, 0, 0, 0, round(255 * opacity))
             pico2d.SDL_RenderFillRect(renderer, None)
             pico2d.SDL_SetRenderDrawBlendMode(renderer, pico2d.SDL_BLENDMODE_NONE)
+            self.configure_renderer()
 
 
 def main():

@@ -25,6 +25,15 @@ class Market:
         self.shelf = None
         self.message, self.message_time = '', 0
 
+    def preload(self):
+        # 원본 PNG와 축소 텍스처를 첫 게임 입장 전에 캐시에 준비한다.
+        self.draw()
+        draw_shelf(self.art, self.state, 0, 0, '')
+        width = product_slots()[0][2]
+        for icon in {product.icon for product in PRODUCTS.values()}:
+            for w, h in ((44, 42), (68, 58), (width - 24, 270)):
+                self.art.draw('icons/' + icon, (0, 0, w, h), trim=True)
+
     def handle(self, event):
         if event.type == p.SDL_WINDOWEVENT and event.window.event == p.SDL_WINDOWEVENT_FOCUS_LOST:
             self.keys.clear()

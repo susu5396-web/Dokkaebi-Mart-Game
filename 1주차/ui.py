@@ -67,7 +67,11 @@ class NicknameUI:
         self.composition = ""
         if enabled:
             pico2d.SDL_StartTextInput()
-            rect = pico2d.SDL_Rect(FIELD[0], HEIGHT - FIELD[1] - FIELD[3], FIELD[2], FIELD[3])
+            width, height = ctypes.c_int(), ctypes.c_int()
+            pico2d.SDL_GetWindowSize(pico2d.open_canvas.__globals__['window'], ctypes.byref(width), ctypes.byref(height))
+            rect = pico2d.SDL_Rect(FIELD[0] + (width.value - WIDTH) // 2,
+                                  HEIGHT - FIELD[1] - FIELD[3] + (height.value - HEIGHT) // 2,
+                                  FIELD[2], FIELD[3])
             pico2d.SDL_SetTextInputRect(ctypes.byref(rect))
         else:
             pico2d.SDL_StopTextInput()

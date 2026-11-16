@@ -156,11 +156,15 @@ class SceneTests(unittest.TestCase):
         game.apply_transition()
         self.assertEqual(game.market.state.inventory, {})
 
-    def test_fade_resize_and_input_pause(self):
+    def test_fade_fixed_window_and_input_pause(self):
         import ctypes
         p, game = self.p, self.game
         game.request_scene('lobby')
         game.apply_transition()
+        prepared_market = game.market
+        width, height = ctypes.c_int(), ctypes.c_int()
+        p.SDL_GetWindowSize(p.open_canvas.__globals__['window'], ctypes.byref(width), ctypes.byref(height))
+        self.assertEqual((width.value, height.value), (950, 622))
         game.animate_transitions = True
         try:
             game.request_scene('stage')
@@ -172,9 +176,10 @@ class SceneTests(unittest.TestCase):
             p.update_canvas()
             game.update(.01)
             self.assertEqual(game.scene, 'stage')
+            self.assertIs(game.market, prepared_market)
             width, height = ctypes.c_int(), ctypes.c_int()
             p.SDL_GetWindowSize(p.open_canvas.__globals__['window'], ctypes.byref(width), ctypes.byref(height))
-            self.assertEqual((width.value, height.value), (1100, 720))
+            self.assertEqual((width.value, height.value), (950, 622))
             remaining = game.market.state.remaining
             self.key(p.SDLK_w)
             self.assertFalse(game.market.keys)

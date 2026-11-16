@@ -6,7 +6,7 @@ import unittest
 
 import pico2d
 
-from main import Game, collect_events
+from main import Game, collect_events, MENU_X, MENU_Y
 from settings import WIDTH, HEIGHT, BUTTON_X, BUTTON_Y
 from ui import CONFIRM
 from lobby import STAGE_ONE, STAGE_TWO, PLAY, RETURN, LOGOUT, QUIT, PREVIEW
@@ -17,7 +17,7 @@ def click(rect=None, position=None):
     event = pico2d.SDL_Event()
     event.type = pico2d.SDL_MOUSEBUTTONDOWN
     event.button.button = pico2d.SDL_BUTTON_LEFT
-    event.button.x, event.button.y = int(x), int(HEIGHT - 1 - y)
+    event.button.x, event.button.y = int(x + MENU_X), int(HEIGHT - 1 - y + MENU_Y)
     return event
 
 
