@@ -3,6 +3,9 @@
 실행: python 1주차/test_lobby.py (pico2d 창을 잠시 열었다가 닫는다)
 """
 import unittest
+from tempfile import TemporaryDirectory
+from pathlib import Path
+from records import RecordBook
 
 import pico2d
 
@@ -56,6 +59,9 @@ class LobbyFlowTests(unittest.TestCase):
         pico2d.close_canvas()
 
     def setUp(self):
+        temporary = TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.game.session.records = RecordBook(Path(temporary.name) / 'rankings.json')
         self.game.running = True
         self.game.lobby.development_mode = False
         self.game.request_scene("title")

@@ -1,7 +1,6 @@
-"""실행 중에만 보관하는 상태. 미리보기는 보상이나 해금을 발생시키지 않는다."""
+"""로그인 상태와 닉네임별 영구 기록을 분리해 관리한다."""
 from dataclasses import dataclass, field
 from records import RecordBook
-from settings import STAGE_REWARDS, ACQUISITION_TARGET
 
 
 @dataclass
@@ -10,7 +9,6 @@ class Session:
     selected_stage: int | None = None
     stage2_unlocked: bool = False
 
-    funds: int = 0
     records: RecordBook = field(default_factory=RecordBook)
 
     def login(self, nickname):
@@ -18,19 +16,11 @@ class Session:
         self.nickname = nickname
         self.stage2_unlocked = self.records.best(1, nickname) is not None
 
-    @property
-    def acquired(self):
-        return self.funds >= ACQUISITION_TARGET
-
     def complete_stage(self, stage):
-        reward = STAGE_REWARDS[stage]
-        self.funds += reward
         if stage == 1:
             self.stage2_unlocked = True
-        return reward
 
     def reset(self):
-        self.funds = 0
         self.nickname = ""
         self.selected_stage = None
         self.stage2_unlocked = False

@@ -1,6 +1,7 @@
 """실행: python -m unittest discover -s 2주차 -p test_market.py"""
 import sys
 import unittest
+from tempfile import TemporaryDirectory
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -127,9 +128,16 @@ class SceneTests(unittest.TestCase):
         event.key.repeat = repeat
         self.game.handle_events([event])
 
-    def test_checkout_retry_rewards_and_acquisition(self):
+    def setUp(self):
+        from records import RecordBook
+        temporary = TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.game.session.records = RecordBook(Path(temporary.name) / 'rankings.json')
+
+    def test_checkout_retry_records_and_stage_unlock(self):
         game = self.game
         game.session.reset()
+        game.session.login('기록테스트')
         game.session.selected_stage = 1
         game.request_scene('stage')
         game.apply_transition()
@@ -138,37 +146,34 @@ class SceneTests(unittest.TestCase):
         market.update(.01)
         self.assertTrue(market.differences)
         self.assertIsNone(market.state.outcome)
-        self.assertEqual(game.session.funds, 0)
+        self.assertIsNone(game.session.records.best(1, '기록테스트'))
         remaining = market.state.remaining
         market.update(.5)
         self.assertLess(market.state.remaining, remaining)
         market.state.inventory = dict(market.state.required)
         self.key(self.p.SDLK_e)
         self.assertEqual(market.state.outcome, 'success')
-        self.assertEqual(game.session.funds, 5000)
+        self.assertEqual(game.session.records.best(1, '기록테스트'), 510)
         self.assertTrue(game.session.stage2_unlocked)
         market.inspect_cart()
         market.update(1)
-        self.assertEqual(game.session.funds, 5000)
+        self.assertEqual(game.session.records.best(1, '기록테스트'), 510)
         game.draw()
         self.key(self.p.SDLK_RETURN)
         self.assertEqual(game.scene, 'lobby')
-        game.session.funds = 40000
         game.session.choose_stage(2)
         game.request_scene('stage')
         game.apply_transition()
         market.actor.x, market.actor.y = 350, 2100
         market.state.inventory = dict(market.state.required)
         market.update(.01)
-        self.assertEqual(market.reward, 10000)
-        self.assertEqual(game.session.funds, 50000)
-        self.assertTrue(game.session.acquired)
+        self.assertEqual(game.session.records.best(2, '기록테스트'), 10)
         self.key(self.p.SDLK_RETURN)
-        self.assertEqual(game.scene, 'ending')
+        self.assertEqual(game.scene, 'lobby')
         game.draw()
         game.session.reset()
 
-    def test_timeout_has_no_reward_and_accepts_result_button(self):
+    def test_timeout_has_no_record_and_accepts_result_button(self):
         game = self.game
         game.session.reset()
         game.request_scene('stage')
@@ -176,7 +181,7 @@ class SceneTests(unittest.TestCase):
         game.market.state.remaining = .001
         game.market.update(.01)
         self.assertEqual(game.market.state.outcome, 'timeout')
-        self.assertEqual(game.session.funds, 0)
+        self.assertEqual(game.session.records.ranking(1), [])
         game.draw()
         from market_result import RESULT_BUTTON
         event = self.p.SDL_Event()

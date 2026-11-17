@@ -1,16 +1,11 @@
 """개별 PNG를 조합하는 로비와 스테이지·엔딩 미리보기 화면."""
 import json
-import os
-from pathlib import Path
-
-from PIL import Image
 import pico2d
 
 from settings import (
     WIDTH, HEIGHT, LOBBY_ASSET_DIR, LOBBY_BACKGROUND, LOBBY_PANEL,
     LOBBY_STAGE, LOBBY_LOCKED, LOBBY_ACCOUNT, LOBBY_MUTED, FONT_PATH,
 )
-from settings import STAGE_REWARDS, ACQUISITION_TARGET
 from records import format_time
 from ui import NAVY, BLUE, inside, rounded_box as base_rounded_box, text_width, load_ui_image
 
@@ -54,11 +49,6 @@ class LobbyUI:
         self.bounds = json.loads((LOBBY_ASSET_DIR / "bounds.json").read_text(encoding="utf-8"))
         for name in self.bounds:
             self.images[name] = load_ui_image(LOBBY_ASSET_DIR / (name + ".png"))
-        money_path = Path(__file__).resolve().parents[1] / '2주차/assets/ui/reward_banknotes.png'
-        self.images['reward_banknotes'] = load_ui_image(money_path)
-        with Image.open(money_path) as money:
-            self.bounds['reward_banknotes'] = money.getchannel('A').point(lambda a: 255 if a > 128 else 0).getbbox()
-        fonts = Path(os.environ.get("WINDIR", "C:/Windows")) / "Fonts"
         self.fonts = {
             size: pico2d.load_font(str(FONT_PATH), size)
             for size in range(12, 37)
@@ -180,14 +170,6 @@ class LobbyUI:
         self.button(QUIT, "종료", mouse, size=14)
 
         self.art("panel_flat", (16, 423, 768, 65), stretch=True)
-        self.art("reward_banknotes", (29, 439, 37, 36))
-        self.text("마트 인수 자금", 77, 458, 20)
-        self.text(f"{self.session.funds:,} / {ACQUISITION_TARGET:,}원", 265, 458, 18)
-        self.art("progress_track", (535, 451, 224, 14), stretch=True)
-        progress = min(1, self.session.funds / ACQUISITION_TARGET)
-        if progress:
-            rounded_box((539, 455, 216 * progress, 6), BLUE, 0)
-        self.text("인수 완료!" if self.session.acquired else f"인수 목표 {progress:.0%} 달성", 647, 436, 12, LOBBY_MUTED, center=True)
 
         self.art("panel_flat", (16, 112, 470, 295), stretch=True)
         self.art("cart_icon", (33, 366, 32, 29))
@@ -210,8 +192,6 @@ class LobbyUI:
         self.text("선택 완료" if selected else "선택 가능", 137, 157, 16, BLUE, center=True)
         stage_two_label = ('선택 완료' if self.session.selected_stage == 2 else '선택 가능') if self.session.stage2_unlocked else '1스테이지 완료 시 해금'
         self.text(stage_two_label, 360, 157, 14, BLUE if self.session.stage2_unlocked else LOBBY_MUTED, center=True)
-        self.text(f'보수 {STAGE_REWARDS[1]:,}원', 137, 136, 12, BLUE, center=True)
-        self.text(f'보수 {STAGE_REWARDS[2]:,}원', 360, 136, 12, BLUE, center=True)
 
         self.draw_ranking(mouse)
 
@@ -221,8 +201,8 @@ class LobbyUI:
                     enabled=self.session.selected_stage is not None, size=24)
         if self.development_mode:
             self.button(PREVIEW, "엔딩 미리보기", mouse, size=13)
-        self.text("보수와 인수 자금은 실행 중에 유지됩니다. 로그아웃/종료하면 초기화됩니다.",
-                  400, 21, 12, LOBBY_MUTED, center=True)
+        self.text(self.session.records.error or "최고 기록은 이 PC에 저장됩니다. 로그아웃하거나 게임을 종료해도 유지됩니다.",
+                  400, 21, 12, LOBBY_MUTED, center=True, max_width=760)
 
     def draw_ranking(self, mouse):
         border = (129, 154, 194)
@@ -275,10 +255,10 @@ class LobbyUI:
         self.art("panel_flat", (105, 105, 590, 415), stretch=True)
         self.art("market_banner", (135, 336, 530, 116))
         if ending:
-            self.text("마트 인수 완료" if self.session.acquired else "엔딩 미리보기 / 개발 전용", 400, 490, 16, BLUE, center=True)
-            self.text("도깨비 마트 인수 완료!", 400, 300, 28, center=True)
-            self.text("모두가 모은 장보기 보수로 마트를 인수했습니다.", 400, 257, 18, center=True)
-            self.text("이제 우리의 마트에서 새로운 이야기가 시작됩니다.", 400, 229, 18, center=True)
+            self.text("완료 화면 미리보기 / 개발 전용", 400, 490, 16, BLUE, center=True)
+            self.text("장보기 완료!", 400, 300, 28, center=True)
+            self.text("더 빠른 시간으로 최고 기록에 도전하세요.", 400, 257, 18, center=True)
+            self.text("스테이지별 랭킹에서 내 기록을 확인할 수 있어요.", 400, 229, 18, center=True)
         else:
             self.text("스테이지 미리보기", 400, 490, 16, BLUE, center=True)
             self.text(f"{self.session.selected_stage}단계를 선택했습니다.", 400, 300, 28, center=True)
