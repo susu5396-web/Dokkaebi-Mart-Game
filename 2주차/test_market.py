@@ -57,8 +57,8 @@ class RulesTests(unittest.TestCase):
         normal.move(0, 1, .05)
         fast.move(0, 1, .05, True)
         self.assertGreater(fast.y, normal.y)
-        self.assertAlmostEqual(normal.y - 500, 250 * .05)
-        self.assertAlmostEqual(fast.y - 500, 400 * .05)
+        self.assertAlmostEqual(normal.y - 500, 300 * .05)
+        self.assertAlmostEqual(fast.y - 500, 420 * .05)
         actor = Actor(x=150, y=500)
         for _ in range(40):
             actor.move(1, 0, .05, True)

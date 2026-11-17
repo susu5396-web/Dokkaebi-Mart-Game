@@ -4,7 +4,7 @@ from functools import lru_cache
 from heapq import heappop, heappush
 from math import hypot, cos, sin, atan2, tau
 
-from market_world import SHELVES, CHECKOUT, can_stand, DOKKAEBI_DEN, DOKKAEBI_SPEED
+from market_world import SHELVES, CHECKOUT, can_stand, DOKKAEBI_DEN, DOKKAEBI_SPEED, DOKKAEBI_FLEE_SPEED
 
 RADIUS = 43
 PLAYER_RADIUS = 63
@@ -222,7 +222,7 @@ class Dokkaebi:
         elif self.repath_in <= 0 or not self.path:
             self.path = route(start, goal)
             self.repath_in = REPATH_INTERVAL
-        budget = DOKKAEBI_SPEED * dt
+        budget = (DOKKAEBI_FLEE_SPEED if fleeing else DOKKAEBI_SPEED) * dt
         while self.path and budget > 0:
             tx, ty = self.path[0]
             dx, dy = tx - self.x, ty - self.y
