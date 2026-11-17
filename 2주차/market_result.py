@@ -1,7 +1,7 @@
 """계산대 검사 안내와 한 판 종료 결과."""
 from catalog import PRODUCTS
 from market_art import box, VIEW_W
-from settings import ACQUISITION_TARGET
+from records import format_time
 
 RESULT_BUTTON = (VIEW_W / 2 - 190, 650, 380, 62)
 
@@ -27,18 +27,19 @@ def draw_result(art, market):
     success = state.outcome == 'success'
     box((95, 200, VIEW_W - 190, 540), (92, 132, 167))
     box((100, 205, VIEW_W - 200, 530), (255, 248, 230))
-    art.text('게임 성공!' if success else '게임 실패 / 시간 초과', VIEW_W / 2, 265, 48, center=True)
+    art.text(f'스테이지 {market.stage} 완료!' if success else '게임 오버 / 시간 초과', VIEW_W / 2, 265, 48, center=True)
     if success:
-        art.draw('ui/reward_banknotes', (VIEW_W / 2 - 100, 310, 200, 130), trim=True)
-        art.text(f'보수 {market.reward:,}원 받았습니다', VIEW_W / 2, 479, 34, center=True)
-        art.text(f'인수 자금 {market.session.funds:,} / {ACQUISITION_TARGET:,}원',
-                 VIEW_W / 2, 530, 27, center=True)
-        note = ('목표 달성! 이제 우리 마트입니다.' if market.session.acquired else
-                '2단계가 열렸습니다!' if market.stage == 1 else '다음 장보기도 도전해 보세요!')
-        art.text(note, VIEW_W / 2, 579, 27, center=True)
+        art.text(market.session.nickname, VIEW_W / 2, 344, 30, center=True, max_width=VIEW_W - 240)
+        art.text(f'완료 시간  {format_time(state.elapsed_ms)}', VIEW_W / 2, 411, 40, center=True)
+        best = market.session.records.best(market.stage, market.session.nickname)
+        art.text(f'내 최고 기록  {format_time(best)}', VIEW_W / 2, 475, 29, center=True)
+        art.text('최고 기록 달성!' if market.new_record else '더 빠른 기록에 도전해 보세요!',
+                 VIEW_W / 2, 525, 28, center=True)
+        note = market.session.records.error or ('스테이지 2가 열렸습니다!' if market.stage == 1 else '스테이지별 랭킹에서 기록을 확인하세요!')
+        art.text(note, VIEW_W / 2, 579, 23, center=True, max_width=VIEW_W - 240)
     else:
         art.text('제한 시간 안에 장보기를 마치지 못했어요.', VIEW_W / 2, 407, 30, center=True)
-        art.text('이번 보수는 0원입니다. 다시 도전해 보세요!', VIEW_W / 2, 477, 27, center=True)
+        art.text('랭킹에는 완료한 기록만 등록됩니다.', VIEW_W / 2, 477, 27, center=True)
     box(RESULT_BUTTON, (60, 111, 184))
-    label = '인수 완료 보기' if success and market.session.acquired else '로비로 돌아가기'
+    label = '로비로 돌아가기'
     art.text(label + '  [Enter]', VIEW_W / 2, 681, 28, (255, 255, 255), True)

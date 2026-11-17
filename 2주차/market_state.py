@@ -23,7 +23,12 @@ class MarketState:
             self.required[pid] += 1
         self.inventory = {}
         self.remaining = 240.0
+        self.time_limit = self.remaining
         self.outcome = None
+
+    @property
+    def elapsed_ms(self):
+        return round((self.time_limit - self.remaining) * 1000)
 
     def add(self, pid):
         if self.outcome is None and pid in PRODUCTS:

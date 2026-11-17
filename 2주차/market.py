@@ -35,6 +35,7 @@ class Market:
         self.stage = self.session.selected_stage or 1
         self.dokkaebi = spawn_dokkaebi(self.stage)
         self.reward = 0
+        self.new_record = False
         self.attack_in = 0
         self.checkout_inside = False
         self.differences = []
@@ -92,11 +93,13 @@ class Market:
         self.inspection_time = 6 if self.differences else 0
         if self.state.outcome == 'success':
             self.reward = self.session.complete_stage(self.stage)
+            self.new_record = self.session.records.record(
+                self.stage, self.session.nickname, self.state.elapsed_ms)
             self.keys.clear()
             self.actor.moving = False
 
     def result_destination(self):
-        return 'ending' if self.state.outcome == 'success' and self.session.acquired else 'lobby'
+        return 'lobby'
 
     def handle(self, event):
         if self.state.outcome is not None:
@@ -172,6 +175,7 @@ class Market:
 
     def update(self, dt):
         self.state.update(dt)
+        dt = min(dt, 0.05)
         if self.state.outcome is not None:
             self.keys.clear()
             self.actor.moving = False

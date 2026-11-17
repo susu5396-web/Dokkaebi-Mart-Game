@@ -249,7 +249,7 @@ def main():
         previous_time = perf_counter()
         while game.running:
             now = perf_counter()
-            dt = min(now - previous_time, 0.05)
+            dt = now - previous_time
             previous_time = now
             game.handle_events(collect_events())
             if not game.running:
