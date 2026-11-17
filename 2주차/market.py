@@ -9,7 +9,7 @@ from market_art import Art, VIEW_W
 from market_player import PlayerSprite
 from market_dokkaebi import (DokkaebiSprite, spawn_dokkaebi, movement_clear, clear_path,
     PLAYER_RADIUS, ENEMY_RADIUS, ATTACK_RANGE, STEAL_RANGE, ESCAPE_DELAY)
-from market_hud import MarketHUD
+from market_hud import MarketHUD, MAP_RECT
 from market_view import draw_world, draw_shelf, product_slots
 from market_result import draw_result, RESULT_BUTTON
 from session import Session
@@ -43,6 +43,7 @@ class Market:
     def preload(self):
         # 원본 PNG와 축소 텍스처를 첫 게임 입장 전에 캐시에 준비한다.
         self.draw()
+        self.art.draw('ui/minimap_locked_blue_v2', MAP_RECT, fit=False)
         draw_shelf(self.art, self.state, 0, 0, '')
         width = product_slots()[0][2]
         for icon in {product.icon for product in PRODUCTS.values()}:
@@ -220,4 +221,6 @@ class Market:
         else:
             draw_world(self.art, self.actor, self.sprite, self.dokkaebi, self.dokkaebi_sprite, self.message)
         self.hud.draw(self.art, self.state, self.actor, self.dokkaebi)
+        if self.shelf is not None:
+            self.art.draw('ui/minimap_locked_blue_v2', MAP_RECT, fit=False)
         draw_result(self.art, self)
