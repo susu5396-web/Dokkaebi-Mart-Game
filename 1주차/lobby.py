@@ -11,6 +11,7 @@ from settings import (
     LOBBY_STAGE, LOBBY_LOCKED, LOBBY_ACCOUNT, LOBBY_MUTED, FONT_PATH,
 )
 from settings import STAGE_REWARDS, ACQUISITION_TARGET
+from records import format_time
 from ui import NAVY, BLUE, inside, rounded_box as base_rounded_box, text_width, load_ui_image
 
 
@@ -36,6 +37,10 @@ LOGOUT = (588, 509, 100, 28)
 QUIT = (697, 509, 74, 28)
 PREVIEW = (594, 60, 176, 26)
 RETURN = (270, 142, 260, 48)
+RANK_TABS = {1: (506, 374, 130, 36), 2: (640, 374, 130, 36)}
+RANK_PREVIOUS = (516, 164, 48, 24)
+RANK_NEXT = (718, 164, 48, 24)
+RANK_PAGE_SIZE = 4
 
 
 class LobbyUI:
@@ -43,6 +48,8 @@ class LobbyUI:
         self.session = session
         self.development_mode = development_mode
         self.message = ""
+        self.ranking_stage = 1
+        self.ranking_page = 0
         self.images = {}
         self.bounds = json.loads((LOBBY_ASSET_DIR / "bounds.json").read_text(encoding="utf-8"))
         for name in self.bounds:
@@ -124,10 +131,24 @@ class LobbyUI:
         self.text(label, x + w / 2, y + h / 2 + 1, size, color, center=True)
 
     def click(self, x, y):
+        for stage, rect in RANK_TABS.items():
+            if inside(x, y, rect):
+                self.ranking_stage = stage
+                self.ranking_page = 0
+                return None
+        page_count = max(1, (len(self.session.records.ranking(self.ranking_stage)) + RANK_PAGE_SIZE - 1) // RANK_PAGE_SIZE)
+        if inside(x, y, RANK_PREVIOUS):
+            self.ranking_page = max(0, self.ranking_page - 1)
+            return None
+        if inside(x, y, RANK_NEXT):
+            self.ranking_page = min(page_count - 1, self.ranking_page + 1)
+            return None
         if inside(x, y, QUIT):
             return "quit"
         if inside(x, y, LOGOUT):
             self.session.reset()
+            self.ranking_stage = 1
+            self.ranking_page = 0
             self.message = ""
             return "title"
         if inside(x, y, STAGE_TWO):
@@ -192,25 +213,7 @@ class LobbyUI:
         self.text(f'보수 {STAGE_REWARDS[1]:,}원', 137, 136, 12, BLUE, center=True)
         self.text(f'보수 {STAGE_REWARDS[2]:,}원', 360, 136, 12, BLUE, center=True)
 
-        self.art("panel_flat", (498, 112, 286, 295), stretch=True)
-        self.art("crown_icon", (515, 369, 29, 25))
-        self.text("마트 인수 기여도", 550, 382, 22, max_width=218)
-        self.text("누적 보수 기준", 550, 357, 13, LOBBY_MUTED)
-        rounded_box((515, 344, 251, 1), (129, 154, 194), 0)
-        self.art("badge", (512, 306, 258, 29), stretch=True)
-        self.text("순위", 539, 321, 14, center=True)
-        self.text("닉네임", 621, 321, 14, center=True)
-        self.text("기여액", 729, 321, 14, center=True)
-        if self.session.funds:
-            self.text('1', 539, 276, 16, center=True)
-            self.text(self.session.nickname, 621, 276, 16, center=True, max_width=95)
-            self.text(f'{self.session.funds:,}', 729, 276, 16, center=True)
-        else:
-            self.text("아직 등록된 기록이 없어요", 641, 259, 16, LOBBY_MUTED, center=True)
-        self.text("함께 마트를 채워 나가요!", 641, 232, 13, LOBBY_MUTED, center=True)
-        rounded_box((515, 190, 251, 1), (129, 154, 194), 0)
-        self.text("내 누적 기여액", 519, 157, 16)
-        self.text(f"{self.session.funds:,}원", 704, 157, 18, BLUE, center=True)
+        self.draw_ranking(mouse)
 
         self.text(self.message or f"{self.session.nickname}님, 도깨비 마트에 오신 것을 환영합니다.",
                   400, 100, 13, BLUE, center=True, max_width=760)
@@ -220,6 +223,52 @@ class LobbyUI:
             self.button(PREVIEW, "엔딩 미리보기", mouse, size=13)
         self.text("보수와 인수 자금은 실행 중에 유지됩니다. 로그아웃/종료하면 초기화됩니다.",
                   400, 21, 12, LOBBY_MUTED, center=True)
+
+    def draw_ranking(self, mouse):
+        border = (129, 154, 194)
+        # 뒤쪽 인덱스를 먼저 그리고 선택한 탭을 앞쪽 종이에 연결한다.
+        for stage, rect in RANK_TABS.items():
+            rounded_box(rect, border, 8)
+            x, y, w, h = rect
+            rounded_box((x + 2, y + 2, w - 4, h - 4),
+                        LOBBY_PANEL if stage == self.ranking_stage else LOBBY_STAGE, 7)
+        rounded_box((498, 112, 286, 266), border, 10)
+        rounded_box((500, 114, 282, 262), LOBBY_PANEL, 8)
+        x, y, w, h = RANK_TABS[self.ranking_stage]
+        rounded_box((x + 2, 371, w - 4, 10), LOBBY_PANEL, 0)
+        for stage, rect in RANK_TABS.items():
+            self.text(f'스테이지 {stage}', rect[0] + rect[2] / 2, 393, 16,
+                      BLUE if stage == self.ranking_stage else LOBBY_MUTED, center=True)
+        self.art('crown_icon', (516, 338, 26, 24))
+        self.text('클리어 시간 랭킹', 550, 351, 20, max_width=220)
+        self.text('빠른 순 · 닉네임별 최고 기록', 641, 327, 12, LOBBY_MUTED, center=True)
+        self.art('badge', (512, 294, 258, 25), stretch=True)
+        self.text('순위', 535, 307, 12, center=True)
+        self.text('닉네임', 615, 307, 12, center=True)
+        self.text('완료 시간', 722, 307, 12, center=True)
+        rows = self.session.records.ranking(self.ranking_stage)
+        pages = max(1, (len(rows) + RANK_PAGE_SIZE - 1) // RANK_PAGE_SIZE)
+        self.ranking_page = min(self.ranking_page, pages - 1)
+        start = self.ranking_page * RANK_PAGE_SIZE
+        for index, (name, elapsed) in enumerate(rows[start:start + RANK_PAGE_SIZE], start):
+            cy = 280 - (index - start) * 27
+            color = BLUE if name == self.session.nickname else NAVY
+            if name == self.session.nickname:
+                rounded_box((512, cy - 12, 258, 24), LOBBY_STAGE, 5)
+            rank = next(i + 1 for i, row in enumerate(rows) if row[1] == elapsed)
+            self.text(str(rank), 535, cy, 14, color, center=True, max_width=38)
+            self.text(name, 615, cy, 14, color, center=True, max_width=100)
+            self.text(format_time(elapsed), 722, cy, 14, color, center=True)
+        if not rows:
+            self.text('아직 완료 기록이 없어요', 641, 250, 15, LOBBY_MUTED, center=True)
+            self.text('첫 기록에 도전해 보세요!', 641, 222, 13, LOBBY_MUTED, center=True)
+        self.button(RANK_PREVIOUS, '<', mouse, enabled=self.ranking_page > 0, size=13)
+        self.button(RANK_NEXT, '>', mouse, enabled=self.ranking_page < pages - 1, size=13)
+        self.text(f'{self.ranking_page + 1} / {pages}', 641, 177, 12, LOBBY_MUTED, center=True)
+        rounded_box((515, 157, 251, 1), border, 0)
+        best = self.session.records.best(self.ranking_stage, self.session.nickname)
+        self.text('내 최고 기록', 519, 135, 14)
+        self.text(format_time(best) if best is not None else '미완료', 715, 135, 16, BLUE, center=True)
 
     def draw_preview(self, mouse, ending=False):
         rounded_box((0, 0, WIDTH, HEIGHT), LOBBY_BACKGROUND, 0)
