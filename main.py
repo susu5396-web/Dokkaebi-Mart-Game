@@ -91,7 +91,7 @@ class Game:
     def confirm_nickname(self):
         self.nickname_ui.submit()
         if self.nickname_ui.saved_name:
-            self.session.nickname = self.nickname_ui.saved_name
+            self.session.login(self.nickname_ui.saved_name)
             self.request_scene("lobby")
 
     def apply_transition(self):

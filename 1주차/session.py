@@ -1,5 +1,6 @@
 """실행 중에만 보관하는 상태. 미리보기는 보상이나 해금을 발생시키지 않는다."""
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from records import RecordBook
 from settings import STAGE_REWARDS, ACQUISITION_TARGET
 
 
@@ -10,6 +11,12 @@ class Session:
     stage2_unlocked: bool = False
 
     funds: int = 0
+    records: RecordBook = field(default_factory=RecordBook)
+
+    def login(self, nickname):
+        self.reset()
+        self.nickname = nickname
+        self.stage2_unlocked = self.records.best(1, nickname) is not None
 
     @property
     def acquired(self):
