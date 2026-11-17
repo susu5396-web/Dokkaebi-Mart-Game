@@ -219,7 +219,8 @@ class Market:
         if self.shelf:
             draw_shelf(self.art, self.state, *self.shelf[:2], self.message)
         else:
-            draw_world(self.art, self.actor, self.sprite, self.dokkaebi, self.dokkaebi_sprite, self.message)
+            draw_world(self.art, self.actor, self.sprite, self.dokkaebi, self.dokkaebi_sprite,
+                       self.message, stage=self.stage)
         self.hud.draw(self.art, self.state, self.actor, self.dokkaebi)
         if self.shelf is not None:
             self.art.draw('ui/minimap_locked_blue_v2', MAP_RECT, fit=False)

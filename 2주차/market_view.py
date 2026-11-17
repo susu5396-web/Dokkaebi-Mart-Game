@@ -1,19 +1,21 @@
 """월드와 매대의 시각 표현. 입력과 수량 변경은 장면에서 처리한다."""
 from catalog import CATEGORIES, PRODUCTS
 from market_art import VIEW_W, VIEW_H, SCREEN_W, SCREEN_H, box, clip
-from market_world import SHELVES, CHECKOUT, DOKKAEBI_DEN, camera
+from market_world import SHELVES, CHECKOUT, dokkaebi_dens, camera
 
 
-def draw_world(art, actor, sprite, dokkaebi=(), dokkaebi_sprite=None, message=""):
+def draw_world(art, actor, sprite, dokkaebi=(), dokkaebi_sprite=None, message="", stage=1):
     cx, cy = camera(actor, VIEW_W, VIEW_H)
     clip((0, 0, VIEW_W, VIEW_H))
     tile = 400
     for y in range(int(cy // tile) * tile, int(cy + VIEW_H) + tile, tile):
         for x in range(int(cx // tile) * tile, int(cx + VIEW_W) + tile, tile):
             art.draw('environment/topview_floor', (x - cx, y - cy, tile, tile))
-    dx, dy, dw, dh = DOKKAEBI_DEN
-    art.draw("environment/dokkaebi_den", (dx - cx, dy - cy, dw, dh), trim=True)
-    art.text("도깨비 굴", dx + dw / 2 - cx, dy + dh + 20 - cy, 23, center=True)
+    for index, (dx, dy, dw, dh) in enumerate(dokkaebi_dens(stage)):
+        art.draw("environment/dokkaebi_den", (dx - cx, dy - cy, dw, dh), trim=True)
+        label_y = dy + dh + 20 if index == 0 else dy - 20
+        label = f"도깨비 굴 {index + 1}" if stage == 2 else "도깨비 굴"
+        art.text(label, dx + dw / 2 - cx, label_y - cy, 23, center=True)
     for category, (x, y, w, h) in enumerate(SHELVES):
         # 세 개의 긴 모듈을 연결해 이동 가능한 8구간 매대를 표현한다.
         for part in range(3):

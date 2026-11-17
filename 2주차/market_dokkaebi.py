@@ -4,7 +4,8 @@ from functools import lru_cache
 from heapq import heappop, heappush
 from math import hypot, cos, sin, atan2, tau
 
-from market_world import SHELVES, CHECKOUT, can_stand, DOKKAEBI_DEN, DOKKAEBI_SPEED, DOKKAEBI_FLEE_SPEED
+from market_world import (SHELVES, CHECKOUT, can_stand, DOKKAEBI_DEN,
+                          DOKKAEBI_SPEED, DOKKAEBI_FLEE_SPEED, dokkaebi_dens)
 
 RADIUS = 43
 PLAYER_RADIUS = 63
@@ -119,6 +120,7 @@ class Dokkaebi:
     respawn_in: float = 0
     stolen_pid: str | None = None
     escape_in: float = 0
+    home_den: tuple = DOKKAEBI_DEN
 
     def banish(self):
         if self.phase != 'active':
@@ -193,15 +195,15 @@ class Dokkaebi:
             if self.respawn_in <= RESPAWN_DELAY - VANISH_DURATION:
                 self.phase = 'hidden'
             if self.respawn_in <= 1e-6:
-                # If the den is occupied, use a nearby free point or wait.
+                # 배정된 굴 입구가 막혀 있으면 다른 굴로 옮기지 않고 기다린다.
                 blockers = [(target, PLAYER_RADIUS)] + [(other, ENEMY_RADIUS) for other in others if other is not self]
-                for point in ((2100, 100), (2038, 100), (2152, 100), (2100, 250), (2100, 380)):
-                    if can_stand(*point) and movement_clear(point, point, blockers, ENEMY_RADIUS):
-                        self.x, self.y = point
-                        self.phase = 'active'
-                        self.repath_in = 0
-                        self.animation = 0
-                        break
+                x, y, w, h = self.home_den
+                point = x + w / 2, y + h / 2
+                if can_stand(*point) and movement_clear(point, point, blockers, ENEMY_RADIUS):
+                    self.x, self.y = point
+                    self.phase = 'active'
+                    self.repath_in = 0
+                    self.animation = 0
             return
         dt = max(0, min(dt, .05))
         self.moving = False
@@ -256,10 +258,8 @@ class Dokkaebi:
 
 
 def spawn_dokkaebi(stage):
-    x, y, w, h = DOKKAEBI_DEN
-    center_x, center_y = x + w / 2, y + h / 2
-    return [Dokkaebi(center_x, center_y)] if stage == 1 else [
-        Dokkaebi(center_x - 62, center_y), Dokkaebi(center_x + 52, center_y)]
+    return [Dokkaebi(x + w / 2, y + h / 2, home_den=(x, y, w, h))
+            for x, y, w, h in dokkaebi_dens(stage)]
 
 
 class DokkaebiSprite:
